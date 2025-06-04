@@ -25,15 +25,16 @@ class ConstructionObject(models.Model):
     longitude = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='objects')
+    developer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='developed_objects')
 
 
 class Review(models.Model):
     class Status(models.TextChoices):
-        PLANNED = 'planned', _('Planned')
-        IN_PROGRESS = 'in_progress', _('In Progress')
-        COMPLETED = 'completed', _('Completed')
-        CANCELLED = 'cancelled', _('Cancelled')
+        PLANNED = 'planned', _('Rejalashtirilgan')
+        IN_PROGRESS = 'in_progress', _('Jarayonda')
+        COMPLETED = 'completed', _('Yakunlangan')
+        CANCELLED = 'cancelled', _('Bekor qilingan')
 
     name = models.CharField(max_length=255)
     description = models.TextField()

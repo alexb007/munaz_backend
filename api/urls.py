@@ -1,14 +1,15 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from .views import (
     ProfileView,
     ReviewListView,
     StartReviewView, ReportCreateView, ReportPhotoCreateView, IssueCreateView, IssuePhotoCreateView, IssueUpdateView,
+    ConstructionsView,
 )
 
 urlpatterns = [
 
     path('users/me/', ProfileView.as_view(), name='profile'),
+    path('objects/', ConstructionsView.as_view(), name='constructions'),
     path('reviews/', ReviewListView.as_view(), name='review-list'),
     path('reviews/<int:review_id>/start/', StartReviewView.as_view(), name='start-review'),
 
