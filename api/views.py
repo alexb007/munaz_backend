@@ -1,12 +1,12 @@
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import get_object_or_404, ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics, permissions
-from .models import Review, Report, Issue, ReportPhoto, IssuePhoto
+from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject
 from .permissions import IsInspectorOrDeveloper
 from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
-    ReportPhotoSerializer, IssuePhotoSerializer
+    ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from geopy.distance import geodesic
@@ -28,6 +28,14 @@ class ProfileView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
+class ConstructionsView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = ConstructionObject.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        queryset = ConstructionObject.objects.all()
+        serializer = ConstructionObjectSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
@@ -35,12 +43,11 @@ class ReviewListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        print(user.phone)
         latitude = self.request.query_params.get('latitude')
         longitude = self.request.query_params.get('longitude')
 
         queryset = Review.objects.filter(
-            Q(assigned_to=user) | Q(object__assigned_users=user),
+            Q(assigned_to=user),
             status='planned'
         ).select_related('object', 'assigned_to')
 
