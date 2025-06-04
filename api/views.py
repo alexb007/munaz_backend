@@ -35,6 +35,7 @@ class ReviewListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        print(user.phone)
         latitude = self.request.query_params.get('latitude')
         longitude = self.request.query_params.get('longitude')
 
