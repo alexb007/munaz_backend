@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.utils.translation import gettext_lazy as _
 
 
@@ -17,6 +17,12 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
+    objects = UserManager()
+
+    class Meta:
+        verbose_name_plural = 'Foydalanuvchilar'
+        verbose_name = 'Foydalanuvchi'
+
 
 class ConstructionObject(models.Model):
     name = models.CharField(max_length=255)
@@ -25,8 +31,15 @@ class ConstructionObject(models.Model):
     longitude = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='objects')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_objects')
     developer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='developed_objects')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'Qurilish Loyihalari'
+        verbose_name = 'Qurilish Loyihasi'
 
 
 class Review(models.Model):
@@ -57,9 +70,12 @@ class Review(models.Model):
 
     class Meta:
         ordering = ['-planned_date']
+        verbose_name_plural = 'Tekshiruvlar'
+        verbose_name = 'Tekshiruv'
 
     def __str__(self):
         return f"{self.name} ({self.get_status_display()})"
+
 
 
 class Report(models.Model):
@@ -79,6 +95,8 @@ class Report(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name_plural = 'Tekshiruv Hisobotlari'
+        verbose_name = 'Tekshiruv hisoboti'
 
     def __str__(self):
         return f"Report for {self.review.name} by {self.created_by}"
@@ -126,6 +144,8 @@ class Issue(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name_plural = 'Aniqlangan kamchiliklar'
+        verbose_name = 'Aniqlangan kamchilik'
 
     def __str__(self):
         return f"{self.title} ({self.get_status_display()})"

@@ -8,7 +8,7 @@ from .permissions import IsInspectorOrDeveloper
 from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, F
 from geopy.distance import geodesic
 
 User = get_user_model()
@@ -49,16 +49,19 @@ class ReviewListView(generics.ListAPIView):
         queryset = Review.objects.filter(
             Q(assigned_to=user),
             status='planned'
-        ).select_related('object', 'assigned_to')
-
-        if latitude and longitude:
-            user_location = (float(latitude), float(longitude))
-            reviews_in_radius = []
-            for review in queryset:
-                obj_location = (review.object.latitude, review.object.longitude)
-                if geodesic(user_location, obj_location).meters <= 200:
-                    reviews_in_radius.append(review.id)
-            queryset = queryset.filter(id__in=reviews_in_radius)
+        ).select_related('object', 'assigned_to').annotate(
+            latitude=F('object__latitude'),
+            longitude=F('object__longitude'),
+        )
+        #
+        # if latitude and longitude:
+        #     user_location = (float(latitude), float(longitude))
+        #     reviews_in_radius = []
+        #     for review in queryset:
+        #         obj_location = (review.object.latitude, review.object.longitude)
+        #         if geodesic(user_location, obj_location).meters <= 200:
+        #             reviews_in_radius.append(review.id)
+        #     queryset = queryset.filter(id__in=reviews_in_radius)
 
         return queryset
 

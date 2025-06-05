@@ -34,6 +34,10 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+
+admin.site.site_header = "MuNaz Portali"
+admin.site.site_title = "Mualliflik Nazorati Portali"
+admin.site.index_title = "Xush Kelibsiz"
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

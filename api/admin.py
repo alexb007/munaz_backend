@@ -16,9 +16,27 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(User, CustomUserAdmin)
 
+class ReviewReportInline(admin.StackedInline):
+    model = Report
+    extra = 0
+
+class ReviewIssueInline(admin.StackedInline):
+    model = Issue
+    extra = 0
+
+class ReviewIssuePhotoInline(admin.StackedInline):
+    model = IssuePhoto
+    extra = 0
+
+class ReviewReportPhotoInline(admin.StackedInline):
+    model = ReportPhoto
+    extra = 0
+
+
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    pass
+    inlines = [ReviewIssueInline, ReviewReportInline]
+
 
 @admin.register(ConstructionObject)
 class ConstructionObjectAdmin(admin.ModelAdmin):
@@ -26,4 +44,8 @@ class ConstructionObjectAdmin(admin.ModelAdmin):
 
 @admin.register(Issue)
 class IssueAdmin(admin.ModelAdmin):
-    pass
+    inlines = [ReviewIssuePhotoInline]
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    inlines = [ReviewReportPhotoInline]

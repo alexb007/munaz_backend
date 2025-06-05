@@ -1,3 +1,4 @@
+from django.core.validators import slug_re
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -35,18 +36,12 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     object = ConstructionObjectSerializer(read_only=True)
     assigned_to = UserSerializer(read_only=True)
+    latitude = serializers.FloatField(read_only=True)
+    longitude = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Review
         fields = '__all__'
-
-
-class ReviewSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Review
-        fields = '__all__'
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
-
 
 class ReportPhotoSerializer(serializers.ModelSerializer):
     class Meta:

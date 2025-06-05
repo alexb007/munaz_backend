@@ -6,6 +6,7 @@ from .views import (
     ConstructionsView,
 )
 
+
 urlpatterns = [
 
     path('users/me/', ProfileView.as_view(), name='profile'),
