@@ -30,7 +30,7 @@ class Person(models.Model):
     photo = models.ImageField(upload_to='photos/', blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     personal_phone = models.CharField(max_length=20, blank=True, null=True)
-    profile = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
+    profile = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
