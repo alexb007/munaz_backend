@@ -34,6 +34,9 @@ class Person(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.fullname
+
     class Meta:
         verbose_name_plural = 'Hodimlar'
         verbose_name = 'Hodim'
@@ -263,3 +266,7 @@ class IssuePhoto(models.Model):
 
     def __str__(self):
         return f"Photo for issue {self.issue.id}"
+
+    class Meta:
+        verbose_name_plural = 'Foto'
+        verbose_name = 'Foto'
