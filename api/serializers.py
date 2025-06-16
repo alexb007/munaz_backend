@@ -2,7 +2,8 @@ from django.core.validators import slug_re
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue
+from .models import User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
+    Person, IssueType, ConstructionObjectDocument
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,7 +28,50 @@ class LoginSerializer(serializers.Serializer):
         }
 
 
+class IssueTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IssueType
+        fields = '__all__'
+
+class ConstructionDocumentSerializer(serializers.ModelSerializer):
+    document_type = serializers.SlugRelatedField(slug_field='title', read_only=True)
+
+    class Meta:
+        model = ConstructionObjectDocument
+        fields = '__all__'
+
+
+class PersonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Person
+        fields = '__all__'
+
+
+class ProjectDeveloperCompaniesSerializer(serializers.ModelSerializer):
+
+    director = PersonSerializer()
+    contact_person = PersonSerializer()
+    personal = PersonSerializer(many=True)
+
+    class Meta:
+        model = ConstructionCompany
+        fields = '__all__'
+
+
+class ConstructionCompanySerializer(serializers.ModelSerializer):
+    director = PersonSerializer()
+    contact_person = PersonSerializer()
+    personal = PersonSerializer(many=True)
+
+    class Meta:
+        model = ConstructionCompany
+        fields = '__all__'
+
+
 class ConstructionObjectSerializer(serializers.ModelSerializer):
+    project_companies = ProjectDeveloperCompaniesSerializer(many=True, read_only=True)
+    construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
+
     class Meta:
         model = ConstructionObject
         fields = '__all__'
@@ -42,6 +86,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
+
 
 class ReportPhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,6 +115,12 @@ class IssuePhotoSerializer(serializers.ModelSerializer):
 class IssueSerializer(serializers.ModelSerializer):
     photos = IssuePhotoSerializer(many=True, read_only=True)
     created_by = UserSerializer(read_only=True)
+
+
+    def to_representation(self, instance):
+        context = super().to_representation(instance)
+        context['issue_type'] = IssueTypeSerializer(instance.issue_type, read_only=True, ).data
+        return context
 
     class Meta:
         model = Issue

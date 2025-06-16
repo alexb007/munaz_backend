@@ -1,12 +1,15 @@
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404, ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status, generics, permissions
-from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject
+from rest_framework import status, generics, permissions, viewsets
+from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
+    ConstructionObjectDocument
 from .permissions import IsInspectorOrDeveloper
 from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
-    ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer
+    ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
+    IssueTypeSerializer
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F
 from geopy.distance import geodesic
@@ -28,14 +31,27 @@ class ProfileView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
-class ConstructionsView(ListAPIView):
+
+class ConstructionsView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = ConstructionObject.objects.all()
+    serializer_class = ConstructionObjectSerializer
+
+    @action(detail=True, methods=['get'])
+    def documents(self, request, pk=None, *args, **kwargs):
+        queryset = self.get_object().documents.all()
+        return Response(ConstructionDocumentSerializer(queryset, many=True, context={'request': request}).data)
+
+
+class ConstructionDocumentsView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = ConstructionObjectDocument.objects.all()
 
     def get(self, request, *args, **kwargs):
-        queryset = ConstructionObject.objects.all()
-        serializer = ConstructionObjectSerializer(queryset, many=True)
+        queryset = ConstructionObjectDocument.objects.all()
+        serializer = ConstructionDocumentSerializer(queryset, many=True)
         return Response(serializer.data)
+
 
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
@@ -48,7 +64,7 @@ class ReviewListView(generics.ListAPIView):
 
         queryset = Review.objects.filter(
             Q(assigned_to=user),
-            status='planned'
+            status__in=['planned', 'in_progress']
         ).select_related('object', 'assigned_to').annotate(
             latitude=F('object__latitude'),
             longitude=F('object__longitude'),
@@ -79,17 +95,17 @@ class StartReviewView(APIView):
                 )
 
             # Проверка геолокации
-            latitude = request.data.get('latitude')
-            longitude = request.data.get('longitude')
-
-            if latitude and longitude:
-                user_location = (float(latitude), float(longitude))
-                obj_location = (review.object.latitude, review.object.longitude)
-                if geodesic(user_location, obj_location).meters > 200:
-                    return Response(
-                        {'error': 'You must be within 200 meters of the object'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+            # latitude = request.data.get('latitude')
+            # longitude = request.data.get('longitude')
+            #
+            # if latitude and longitude:
+            #     user_location = (float(latitude), float(longitude))
+            #     obj_location = (review.object.latitude, review.object.longitude)
+            #     if geodesic(user_location, obj_location).meters > 200:
+            #         return Response(
+            #             {'error': 'You must be within 200 meters of the object'},
+            #             status=status.HTTP_400_BAD_REQUEST
+            #         )
 
             review.status = 'in_progress'
             review.save()
@@ -111,6 +127,10 @@ class ReportCreateView(generics.CreateAPIView):
         review = get_object_or_404(Review, pk=self.kwargs['review_id'])
         serializer.save(review=review, created_by=self.request.user)
 
+
+class IssueTypeView(generics.ListAPIView):
+    queryset = IssueType.objects.all()
+    serializer_class = IssueTypeSerializer
 
 class ReportPhotoCreateView(generics.CreateAPIView):
     queryset = ReportPhoto.objects.all()
