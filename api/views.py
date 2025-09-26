@@ -3,7 +3,7 @@ from rest_framework.generics import get_object_or_404, ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status, generics, permissions, viewsets
+from rest_framework import status, generics, permissions, viewsets, filters
 from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument
 from .permissions import IsInspectorOrDeveloper
@@ -36,6 +36,7 @@ class ConstructionsView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = ConstructionObject.objects.all()
     serializer_class = ConstructionObjectSerializer
+    filter_backends = (filters.SearchFilter,)
 
     @action(detail=True, methods=['get'])
     def documents(self, request, pk=None, *args, **kwargs):
