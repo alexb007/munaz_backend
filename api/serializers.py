@@ -47,6 +47,17 @@ class PersonSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ProjectOwnerCompaniesSerializer(serializers.ModelSerializer):
+
+    director = PersonSerializer()
+    contact_person = PersonSerializer()
+    personal = PersonSerializer(many=True)
+
+    class Meta:
+        model = ConstructionCompany
+        fields = '__all__'
+
+
 class ProjectDeveloperCompaniesSerializer(serializers.ModelSerializer):
 
     director = PersonSerializer()
@@ -69,6 +80,7 @@ class ConstructionCompanySerializer(serializers.ModelSerializer):
 
 
 class ConstructionObjectSerializer(serializers.ModelSerializer):
+    owner_companies = ProjectOwnerCompaniesSerializer(many=True, read_only=True)
     project_companies = ProjectDeveloperCompaniesSerializer(many=True, read_only=True)
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
 

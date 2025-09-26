@@ -160,6 +160,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 100
 }
 
 from datetime import timedelta
@@ -171,7 +173,7 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = ["https://localhost", "http://192.168.100.11:8000"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost", "http://192.168.100.11:8000", "http://185.203.237.57:8145", "http://muallifnazorat.uz", "http://muallifnazorat.uz:8145", "http://api.muallifnazorat.uz"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 UNFOLD = {
