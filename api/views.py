@@ -37,7 +37,8 @@ class ConstructionsView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = ConstructionObject.objects.all()
     serializer_class = ConstructionObjectSerializer
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
 
     @action(detail=True, methods=['get'])
     def documents(self, request, pk=None, *args, **kwargs):
