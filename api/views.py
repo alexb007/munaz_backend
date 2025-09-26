@@ -1,3 +1,4 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404, ListAPIView
 from rest_framework.views import APIView
@@ -36,7 +37,7 @@ class ConstructionsView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = ConstructionObject.objects.all()
     serializer_class = ConstructionObjectSerializer
-    filter_backends = (filters.SearchFilter,)
+    filter_backends = (DjangoFilterBackend,)
 
     @action(detail=True, methods=['get'])
     def documents(self, request, pk=None, *args, **kwargs):
