@@ -10,7 +10,7 @@ from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, Construction
 from .permissions import IsInspectorOrDeveloper
 from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
-    IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer
+    IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F
 from geopy.distance import geodesic
@@ -71,7 +71,7 @@ class ConstructionDocumentsView(ListAPIView):
 
 
 class InspectionsView(viewsets.ModelViewSet):
-    serializer_class = ReviewSerializer
+    serializer_class = BaseReviewSerializer
     queryset = Review.objects.all().select_related('assigned_to', )
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
@@ -80,7 +80,7 @@ class InspectionsView(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
             return ReviewListSerializer
-        return ReviewSerializer
+        return BaseReviewSerializer
 
 class IssuesView(viewsets.ModelViewSet):
     serializer_class = IssueSerializer

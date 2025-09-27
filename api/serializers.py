@@ -104,13 +104,13 @@ class ReviewListSerializer(serializers.ModelSerializer):
         exclude = ('object',)
 
 
-class ReviewSerializer(serializers.ModelSerializer):
+class BaseReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
 
 
-class ReviewSerializer(ReviewSerializer):
+class ReviewSerializer(BaseReviewSerializer):
     object = ConstructionObjectSerializer(read_only=True)
     assigned_to = UserSerializer(read_only=True)
     latitude = serializers.FloatField(read_only=True)
