@@ -10,7 +10,7 @@ from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, Construction
 from .permissions import IsInspectorOrDeveloper
 from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
-    IssueTypeSerializer
+    IssueTypeSerializer, ConstructionObjectListSerializer
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F
 from geopy.distance import geodesic
@@ -35,10 +35,24 @@ class ProfileView(APIView):
 
 class ConstructionsView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = ConstructionObject.objects.all()
     serializer_class = ConstructionObjectSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
+
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ConstructionObjectListSerializer
+        return ConstructionObjectSerializer
+
+    def get_queryset(self):
+        queryset = ConstructionObject.objects.all().select_related('owner', )
+        if self.action == 'retrieve':
+            queryset = queryset.prefetch_related(
+            'owner_companies', 'owner_companies__director', 'owner_companies__contact_person', 'owner_companies__personal',
+            'project_companies', 'project_companies__director', 'project_companies__contact_person', 'project_companies__personal',
+            'construction_companies', 'construction_companies__director', 'construction_companies__contact_person','construction_companies__personal')
+        return queryset
 
     @action(detail=True, methods=['get'])
     def documents(self, request, pk=None, *args, **kwargs):

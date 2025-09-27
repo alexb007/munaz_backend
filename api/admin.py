@@ -93,6 +93,10 @@ class PersonAdmin(ModelAdmin):
 class IssueTypeAdmin(ModelAdmin):
     pass
 
+@admin.register(ProjectOwnerCompany)
+class ProjectOwnerCompanyAdmin(ModelAdmin):
+    pass
+
 @admin.register(ConstructionCompany)
 class ConstructionCompanyAdmin(ModelAdmin):
     pass

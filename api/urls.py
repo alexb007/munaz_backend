@@ -9,9 +9,9 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register('objects', ConstructionsView)
-router.register('inspections', InspectionsView)
-router.register('issues', IssuesView)
+router.register('objects', ConstructionsView, 'projects')
+router.register('inspections', InspectionsView, 'inspections')
+router.register('issues', IssuesView, 'issues')
 
 urlpatterns = [
 

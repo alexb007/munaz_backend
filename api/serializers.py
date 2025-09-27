@@ -88,6 +88,12 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
         model = ConstructionObject
         fields = '__all__'
 
+class ConstructionObjectListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ConstructionObject
+        exclude = ['project_companies', 'construction_companies', 'owner_companies']
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     object = ConstructionObjectSerializer(read_only=True)
