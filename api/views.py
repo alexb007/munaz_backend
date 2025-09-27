@@ -71,11 +71,16 @@ class ConstructionDocumentsView(ListAPIView):
 
 
 class InspectionsView(viewsets.ModelViewSet):
-    serializer_class = ReviewListSerializer
+    serializer_class = ReviewSerializer
     queryset = Review.objects.all().select_related('assigned_to', )
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('object', 'assigned_to')
+
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return ReviewListSerializer
+        return ReviewSerializer
 
 class IssuesView(viewsets.ModelViewSet):
     serializer_class = IssueSerializer
