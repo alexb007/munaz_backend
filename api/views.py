@@ -63,6 +63,13 @@ class InspectionsView(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('object', 'assigned_to')
 
+class IssuesView(viewsets.ModelViewSet):
+    serializer_class = IssueSerializer
+    queryset = Issue.objects.all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('review__object', 'issue_type')
+
 
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer

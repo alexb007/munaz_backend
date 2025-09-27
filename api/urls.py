@@ -5,12 +5,13 @@ from .views import (
     ProfileView,
     ReviewListView,
     StartReviewView, ReportCreateView, ReportPhotoCreateView, IssueCreateView, IssuePhotoCreateView, IssueUpdateView,
-    ConstructionsView, IssueTypeView, InspectionsView,
+    ConstructionsView, IssueTypeView, InspectionsView, IssuesView
 )
 
 router = DefaultRouter()
 router.register('objects', ConstructionsView)
 router.register('inspections', InspectionsView)
+router.register('issues', IssuesView)
 
 urlpatterns = [
 
