@@ -33,6 +33,7 @@ class IssueTypeSerializer(serializers.ModelSerializer):
         model = IssueType
         fields = '__all__'
 
+
 class ConstructionDocumentSerializer(serializers.ModelSerializer):
     document_type = serializers.SlugRelatedField(slug_field='title', read_only=True)
 
@@ -48,7 +49,6 @@ class PersonSerializer(serializers.ModelSerializer):
 
 
 class ProjectOwnerCompaniesSerializer(serializers.ModelSerializer):
-
     director = PersonSerializer()
     contact_person = PersonSerializer()
     personal = PersonSerializer(many=True)
@@ -59,7 +59,6 @@ class ProjectOwnerCompaniesSerializer(serializers.ModelSerializer):
 
 
 class ProjectDeveloperCompaniesSerializer(serializers.ModelSerializer):
-
     director = PersonSerializer()
     contact_person = PersonSerializer()
     personal = PersonSerializer(many=True)
@@ -88,8 +87,8 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
         model = ConstructionObject
         fields = '__all__'
 
-class ConstructionObjectListSerializer(serializers.ModelSerializer):
 
+class ConstructionObjectListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConstructionObject
         exclude = ['project_companies', 'construction_companies', 'owner_companies']
@@ -104,15 +103,18 @@ class ReviewListSerializer(serializers.ModelSerializer):
         model = Review
         exclude = ('object',)
 
+
 class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+
+class ReviewSerializer(ReviewSerializer):
     object = ConstructionObjectSerializer(read_only=True)
     assigned_to = UserSerializer(read_only=True)
     latitude = serializers.FloatField(read_only=True)
     longitude = serializers.FloatField(read_only=True)
-
-    class Meta:
-        model = Review
-        fields = '__all__'
 
 
 class ReportPhotoSerializer(serializers.ModelSerializer):
@@ -142,7 +144,6 @@ class IssuePhotoSerializer(serializers.ModelSerializer):
 class IssueSerializer(serializers.ModelSerializer):
     photos = IssuePhotoSerializer(many=True, read_only=True)
     created_by = UserSerializer(read_only=True)
-
 
     def to_representation(self, instance):
         context = super().to_representation(instance)
