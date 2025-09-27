@@ -56,6 +56,14 @@ class ConstructionDocumentsView(ListAPIView):
         return Response(serializer.data)
 
 
+class InspectionsView(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    queryset = Review.objects.all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('object', 'assigned_to')
+
+
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
@@ -136,6 +144,7 @@ class ReportCreateView(generics.CreateAPIView):
 class IssueTypeView(generics.ListAPIView):
     queryset = IssueType.objects.all()
     serializer_class = IssueTypeSerializer
+
 
 class ReportPhotoCreateView(generics.CreateAPIView):
     queryset = ReportPhoto.objects.all()
