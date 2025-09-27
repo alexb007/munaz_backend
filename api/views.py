@@ -10,7 +10,7 @@ from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, Construction
 from .permissions import IsInspectorOrDeveloper
 from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
-    IssueTypeSerializer, ConstructionObjectListSerializer
+    IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F
 from geopy.distance import geodesic
@@ -71,15 +71,15 @@ class ConstructionDocumentsView(ListAPIView):
 
 
 class InspectionsView(viewsets.ModelViewSet):
-    serializer_class = ReviewSerializer
-    queryset = Review.objects.all()
+    serializer_class = ReviewListSerializer
+    queryset = Review.objects.all().select_related('assigned_to', )
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('object', 'assigned_to')
 
 class IssuesView(viewsets.ModelViewSet):
     serializer_class = IssueSerializer
-    queryset = Issue.objects.all()
+    queryset = Issue.objects.all().select_related('issue_type', 'created_by',).prefetch_related('photos')
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('review__object', 'issue_type')

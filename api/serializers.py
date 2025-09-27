@@ -95,6 +95,15 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
         exclude = ['project_companies', 'construction_companies', 'owner_companies']
 
 
+class ReviewListSerializer(serializers.ModelSerializer):
+    assigned_to = UserSerializer(read_only=True)
+    latitude = serializers.FloatField(read_only=True)
+    longitude = serializers.FloatField(read_only=True)
+
+    class Meta:
+        model = Review
+        exclude = ('object',)
+
 class ReviewSerializer(serializers.ModelSerializer):
     object = ConstructionObjectSerializer(read_only=True)
     assigned_to = UserSerializer(read_only=True)
