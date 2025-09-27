@@ -59,6 +59,8 @@ class ConstructionDocumentsView(ListAPIView):
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('object',)
 
     def get_queryset(self):
         user = self.request.user
