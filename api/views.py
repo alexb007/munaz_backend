@@ -1,19 +1,26 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.generics import get_object_or_404, ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework import status, generics, permissions, viewsets, filters
+
+from .authentication import BruteforceProtectedJWTAuthentication
 from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
-    ConstructionObjectDocument
+    ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
+    ConstructionCompany, LoginAttempt
 from .permissions import IsInspectorOrDeveloper
 from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
-    IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer
+    IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
+    InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
+    ConstructionCompanySerializer
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F
 from geopy.distance import geodesic
+
+from .utils import unblock_user, get_user_login_stats
 
 User = get_user_model()
 
@@ -39,7 +46,6 @@ class ConstructionsView(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
-
     def get_serializer_class(self):
         if self.action == 'list':
             return ConstructionObjectListSerializer
@@ -49,9 +55,12 @@ class ConstructionsView(viewsets.ModelViewSet):
         queryset = ConstructionObject.objects.all().select_related('owner', )
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
-            'owner_companies', 'owner_companies__director', 'owner_companies__contact_person', 'owner_companies__personal',
-            'project_companies', 'project_companies__director', 'project_companies__contact_person', 'project_companies__personal',
-            'construction_companies', 'construction_companies__director', 'construction_companies__contact_person','construction_companies__personal')
+                'owner_companies', 'owner_companies__director', 'owner_companies__contact_person',
+                'owner_companies__personal',
+                'project_companies', 'project_companies__director', 'project_companies__contact_person',
+                'project_companies__personal',
+                'construction_companies', 'construction_companies__director', 'construction_companies__contact_person',
+                'construction_companies__personal')
         return queryset
 
     @action(detail=True, methods=['get'])
@@ -70,6 +79,11 @@ class ConstructionDocumentsView(ListAPIView):
         return Response(serializer.data)
 
 
+class InspectionTypesView(ListAPIView):
+    serializer_class = InspectionTypeSerializer
+    queryset = InspectionType.objects.all()
+
+
 class InspectionsView(viewsets.ModelViewSet):
     serializer_class = BaseReviewSerializer
     queryset = Review.objects.all().select_related('assigned_to', )
@@ -82,9 +96,19 @@ class InspectionsView(viewsets.ModelViewSet):
             return ReviewListSerializer
         return BaseReviewSerializer
 
+    @action(detail=False, methods=['get'])
+    def inspectors(self, request, pk=None, *args, **kwargs):
+        companies = ProjectDeveloperCompany.objects.filter(personal__in=[request.user.person])
+        if companies is not None and companies.count() > 0:
+            queryset = companies.first().personal.all()
+            serializer = PersonSerializer(queryset, many=True)
+            return Response(serializer.data)
+        return Response([])
+
+
 class IssuesView(viewsets.ModelViewSet):
     serializer_class = IssueSerializer
-    queryset = Issue.objects.all().select_related('issue_type', 'created_by',).prefetch_related('photos')
+    queryset = Issue.objects.all().select_related('issue_type', 'created_by', ).prefetch_related('photos')
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('review__object', 'issue_type')
@@ -207,3 +231,96 @@ class IssueUpdateView(generics.UpdateAPIView):
     serializer_class = IssueSerializer
     permission_classes = [permissions.IsAuthenticated, IsInspectorOrDeveloper]
     http_method_names = ['patch']
+
+
+class ProjectCompanyView(viewsets.ModelViewSet):
+    serializer_class = ProjectDeveloperCompanySerializer
+    queryset = ProjectDeveloperCompany.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
+    permission_classes = [IsAuthenticated, ]
+
+
+class ProjectOwnerCompanyView(viewsets.ModelViewSet):
+    serializer_class = ProjectOwnerCompanySerializer
+    queryset = ProjectOwnerCompany.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
+    permission_classes = [IsAuthenticated, ]
+
+
+
+class ConstructionCompanyView(viewsets.ModelViewSet):
+    serializer_class = ConstructionCompanySerializer
+    queryset = ConstructionCompany.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
+    permission_classes = [IsAuthenticated, ]
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def unblock_user_view(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        unblock_user(user)
+        return Response({
+            'message': f'User {user.username} has been unblocked'
+        }, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({
+            'error': 'User not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def user_login_stats(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        stats = get_user_login_stats(user)
+        return Response(stats, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({
+            'error': 'User not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def custom_token_obtain_pair(request):
+    """
+    Кастомный endpoint для получения токена с защитой от брутфорса
+    """
+    from rest_framework_simplejwt.views import TokenObtainPairView
+    from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+    authenticator = BruteforceProtectedJWTAuthentication()
+    ip_address = authenticator.get_client_ip(request)
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+
+    serializer = TokenObtainPairSerializer(data=request.data)
+    print('asd')
+
+    if serializer.is_valid():
+        # Успешная аутентификация
+        user = serializer.user
+        LoginAttempt.objects.create(
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            successful=True
+        )
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    else:
+        print("ASD")
+        # Неудачная аутентификация
+        username = request.data.get('username')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                authenticator.handle_failed_attempt(username, ip_address, user_agent, request)
+            except User.DoesNotExist:
+                authenticator.log_failed_attempt_for_nonexistent_user(username, ip_address, user_agent)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

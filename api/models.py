@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -53,13 +53,13 @@ class ProjectOwnerCompany(models.Model):
 
     personal = models.ManyToManyField(Person)
 
-
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name_plural = 'Loyiha tashkilotlari'
         verbose_name = 'Loyiha tashkiloti'
+
 
 class ProjectDeveloperCompany(models.Model):
     name = models.CharField(max_length=255)
@@ -72,7 +72,6 @@ class ProjectDeveloperCompany(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     personal = models.ManyToManyField(Person)
-
 
     def __str__(self):
         return self.name
@@ -153,6 +152,18 @@ class ConstructionObjectDocument(models.Model):
         verbose_name = 'Hujjat'
 
 
+class InspectionType(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+        verbose_name_plural = 'Tekshiruv turlari'
+        verbose_name = 'Tekshiruv turi'
+
+
 class Review(models.Model):
     class Status(models.TextChoices):
         PLANNED = 'planned', _('Rejalashtirilgan')
@@ -161,10 +172,11 @@ class Review(models.Model):
         CANCELLED = 'cancelled', _('Bekor qilingan')
 
     name = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     object = models.ForeignKey(ConstructionObject, on_delete=models.CASCADE)
     planned_date = models.DateTimeField()
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='reviews')
+    inspection_types = models.ManyToManyField(InspectionType)
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -223,6 +235,7 @@ class ReportPhoto(models.Model):
 
     def __str__(self):
         return f"Photo for report {self.report.id}"
+
 
 class IssueType(models.Model):
     name = models.CharField(max_length=255)
@@ -294,3 +307,21 @@ class IssuePhoto(models.Model):
     class Meta:
         verbose_name_plural = 'Foto'
         verbose_name = 'Foto'
+
+
+class LoginAttempt(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='login_attempts'
+    )
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    successful = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.timestamp} - {'Success' if self.successful else 'Failed'}"

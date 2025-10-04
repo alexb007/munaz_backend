@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
-    Person, IssueType, ConstructionObjectDocument
+    Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -48,23 +48,23 @@ class PersonSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ProjectOwnerCompaniesSerializer(serializers.ModelSerializer):
+class ProjectOwnerCompanySerializer(serializers.ModelSerializer):
     director = PersonSerializer()
     contact_person = PersonSerializer()
     personal = PersonSerializer(many=True)
 
     class Meta:
-        model = ConstructionCompany
+        model = ProjectOwnerCompany
         fields = '__all__'
 
 
-class ProjectDeveloperCompaniesSerializer(serializers.ModelSerializer):
+class ProjectDeveloperCompanySerializer(serializers.ModelSerializer):
     director = PersonSerializer()
     contact_person = PersonSerializer()
     personal = PersonSerializer(many=True)
 
     class Meta:
-        model = ConstructionCompany
+        model = ProjectDeveloperCompany
         fields = '__all__'
 
 
@@ -79,8 +79,8 @@ class ConstructionCompanySerializer(serializers.ModelSerializer):
 
 
 class ConstructionObjectSerializer(serializers.ModelSerializer):
-    owner_companies = ProjectOwnerCompaniesSerializer(many=True, read_only=True)
-    project_companies = ProjectDeveloperCompaniesSerializer(many=True, read_only=True)
+    owner_companies = ProjectOwnerCompanySerializer(many=True, read_only=True)
+    project_companies = ProjectDeveloperCompanySerializer(many=True, read_only=True)
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
 
     class Meta:
@@ -92,6 +92,12 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConstructionObject
         exclude = ['project_companies', 'construction_companies', 'owner_companies']
+
+
+class InspectionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InspectionType
+        fields = '__all__'
 
 
 class ReviewListSerializer(serializers.ModelSerializer):

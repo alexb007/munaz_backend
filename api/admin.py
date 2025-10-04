@@ -29,6 +29,20 @@ class CustomUserAdmin(UserAdmin):
 admin.site.unregister(Group)
 
 
+@admin.register(LoginAttempt)
+class LoginAttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'ip_address', 'timestamp', 'successful']
+    list_filter = ['successful', 'timestamp']
+    search_fields = ['user__username', 'ip_address']
+    readonly_fields = ['user', 'ip_address', 'user_agent', 'timestamp', 'successful']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(User)
 class UserAdmin(BaseUserAdmin, ModelAdmin):
     # Forms loaded from `unfold.forms`
@@ -91,6 +105,10 @@ class PersonAdmin(ModelAdmin):
 
 @admin.register(IssueType)
 class IssueTypeAdmin(ModelAdmin):
+    pass
+
+@admin.register(InspectionType)
+class InspectionTypeAdmin(ModelAdmin):
     pass
 
 @admin.register(ProjectOwnerCompany)
