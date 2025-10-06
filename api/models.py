@@ -7,11 +7,13 @@ from django.utils.translation import gettext_lazy as _
 class User(AbstractUser):
     ROLES = (
         ('worker', 'Worker'),
-        ('supervisor', 'Supervisor'),
+        ('supervisor', 'Inspektor'),
         ('admin', 'Admin'),
-        ('author', 'Buyurtmachi'),
+        ('owner', 'Buyurtmachi'),
         ('developer', 'Loyihachi'),
+        ('builder', 'Quruvchi'),
         ('prokuratura', 'Prokuratura'),
+        ('control', 'Nazorat'),
     )
 
     role = models.CharField(max_length=20, choices=ROLES, default='worker')

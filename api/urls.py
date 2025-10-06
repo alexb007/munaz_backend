@@ -1,5 +1,3 @@
-from encodings.rot_13 import rot13
-
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
@@ -8,13 +6,16 @@ from .views import (
     ReviewListView,
     StartReviewView, ReportCreateView, ReportPhotoCreateView, IssueCreateView, IssuePhotoCreateView, IssueUpdateView,
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
-    ProjectOwnerCompanyView, ConstructionCompanyView, custom_token_obtain_pair,
+    ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView, ConstructionDocumentTypeView
 )
 
 router = DefaultRouter()
 router.register('objects', ConstructionsView, 'projects')
+router.register('documents', ConstructionObjectDocumentsView, 'documents')
+router.register('document-types', ConstructionDocumentTypeView, 'document-types')
 router.register('inspections', InspectionsView, 'inspections')
 router.register('issues', IssuesView, 'issues')
+router.register('persons', PersonView, 'persons')
 router.register('project-companies', ProjectCompanyView, 'project-companies')
 router.register('owner-companies', ProjectOwnerCompanyView, 'owner-companies')
 router.register('construction-companies', ConstructionCompanyView, 'construction-companies')
@@ -23,7 +24,6 @@ urlpatterns = [
     path('users/me/', ProfileView.as_view(), name='profile'),
     path('reviews/', ReviewListView.as_view(), name='review-list'),
     path('reviews/<int:review_id>/start/', StartReviewView.as_view(), name='start-review'),
-
 
     path('reviews/<int:review_id>/reports/', ReportCreateView.as_view(), name='report-create'),
     path('reports/<int:report_id>/photos/', ReportPhotoCreateView.as_view(), name='report-photo-create'),

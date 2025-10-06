@@ -1,14 +1,10 @@
-from xml.dom.minidom import Document
-
 from django.contrib import admin
+from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import Group, User as BaseUser
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 from unfold.admin import ModelAdmin, StackedInline
-
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
-
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
 from .forms import ConstructionObjectForm
@@ -19,11 +15,10 @@ from .models import *
 
 class CustomUserAdmin(UserAdmin):
     model = User
-    list_display = ['email', 'username', 'phone', 'is_staff']
+    list_display = ['email', 'username', 'phone', 'is_staff', 'role']
     fieldsets = UserAdmin.fieldsets + (
         (None, {'fields': ('phone',)}),
     )
-
 
 
 admin.site.unregister(Group)
@@ -50,6 +45,11 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
 
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        fieldsets[0][1]['fields'] += ('role', )
+        return fieldsets
+
 
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin):
@@ -68,7 +68,6 @@ class ReviewIssueInline(StackedInline):
     tab = True
 
 
-
 class ReviewIssuePhotoInline(StackedInline):
     model = IssuePhoto
     extra = 0
@@ -79,7 +78,7 @@ class ReviewIssuePhotoInline(StackedInline):
         return mark_safe('<img src="{url}" width="100px" height="100px" />'.format(
             url=obj.photo.url,
         )
-    )
+        )
 
 
 class ReviewReportPhotoInline(StackedInline):
@@ -91,37 +90,46 @@ class ReviewReportPhotoInline(StackedInline):
 class ReviewAdmin(ModelAdmin):
     inlines = [ReviewIssueInline, ReviewReportInline]
 
+
 @admin.register(ConstructionObjectDocumentType)
 class ConstructionObjectAdmin(ModelAdmin):
     pass
+
 
 class DocumentInline(StackedInline):
     model = ConstructionObjectDocument
     extra = 0
 
+
 @admin.register(Person)
 class PersonAdmin(ModelAdmin):
     pass
+
 
 @admin.register(IssueType)
 class IssueTypeAdmin(ModelAdmin):
     pass
 
+
 @admin.register(InspectionType)
 class InspectionTypeAdmin(ModelAdmin):
     pass
+
 
 @admin.register(ProjectOwnerCompany)
 class ProjectOwnerCompanyAdmin(ModelAdmin):
     pass
 
+
 @admin.register(ConstructionCompany)
 class ConstructionCompanyAdmin(ModelAdmin):
     pass
 
+
 @admin.register(ProjectDeveloperCompany)
 class ProjectDeveloperCompanyAdmin(ModelAdmin):
     pass
+
 
 @admin.register(ConstructionObject)
 class ConstructionObjectAdmin(ModelAdmin):

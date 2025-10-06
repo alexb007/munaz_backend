@@ -1,35 +1,26 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Q, F
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, generics, permissions, viewsets, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.generics import get_object_or_404, ListAPIView
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from rest_framework import status, generics, permissions, viewsets, filters
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .authentication import BruteforceProtectedJWTAuthentication
 from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
-    ConstructionCompany, LoginAttempt
+    ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType
 from .permissions import IsInspectorOrDeveloper
-from .serializers import LoginSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
+from .serializers import UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
     IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
     InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
-    ConstructionCompanySerializer
-from django.contrib.auth import get_user_model
-from django.db.models import Q, F
-from geopy.distance import geodesic
-
+    ConstructionCompanySerializer, ConstructionDocumentTypeSerializer
 from .utils import unblock_user, get_user_login_stats
 
 User = get_user_model()
-
-
-class LoginView(APIView):
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.validated_data)
 
 
 class ProfileView(APIView):
@@ -79,6 +70,19 @@ class ConstructionDocumentsView(ListAPIView):
         return Response(serializer.data)
 
 
+class ConstructionDocumentTypeView(viewsets.ModelViewSet):
+    serializer_class = ConstructionDocumentTypeSerializer
+    queryset = ConstructionObjectDocumentType.objects.all()
+
+
+class ConstructionObjectDocumentsView(viewsets.ModelViewSet):
+    serializer_class = ConstructionDocumentSerializer
+    queryset = ConstructionObjectDocument.objects.all()
+    permission_classes = [IsAuthenticated, ]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('construction', 'document_type',)
+
+
 class InspectionTypesView(ListAPIView):
     serializer_class = InspectionTypeSerializer
     queryset = InspectionType.objects.all()
@@ -104,6 +108,13 @@ class InspectionsView(viewsets.ModelViewSet):
             serializer = PersonSerializer(queryset, many=True)
             return Response(serializer.data)
         return Response([])
+
+
+class PersonView(viewsets.ModelViewSet):
+    serializer_class = PersonSerializer
+    queryset = Person.objects.all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
 
 
 class IssuesView(viewsets.ModelViewSet):
@@ -249,14 +260,12 @@ class ProjectOwnerCompanyView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ]
 
 
-
 class ConstructionCompanyView(viewsets.ModelViewSet):
     serializer_class = ConstructionCompanySerializer
     queryset = ConstructionCompany.objects.all()
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
     permission_classes = [IsAuthenticated, ]
-
 
 
 @api_view(['POST'])
@@ -272,6 +281,7 @@ def unblock_user_view(request, user_id):
         return Response({
             'error': 'User not found'
         }, status=status.HTTP_404_NOT_FOUND)
+
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
@@ -292,7 +302,6 @@ def custom_token_obtain_pair(request):
     """
     Кастомный endpoint для получения токена с защитой от брутфорса
     """
-    from rest_framework_simplejwt.views import TokenObtainPairView
     from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
     authenticator = BruteforceProtectedJWTAuthentication()

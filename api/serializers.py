@@ -1,9 +1,8 @@
-from django.core.validators import slug_re
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
+
 from .models import User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
-    Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany
+    Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
+    ConstructionObjectDocumentType
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -12,30 +11,28 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'phone', 'avatar']
 
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField()
-
-    def validate(self, attrs):
-        user = authenticate(username=attrs['username'], password=attrs['password'])
-        if not user:
-            raise serializers.ValidationError('Invalid credentials')
-        refresh = RefreshToken.for_user(user)
-        return {
-            'user': UserSerializer(user).data,
-            'token': str(refresh.access_token),
-            'refresh': str(refresh),
-        }
-
-
 class IssueTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = IssueType
         fields = '__all__'
 
 
+class ConstructionDocumentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConstructionObjectDocumentType
+        fields = '__all__'
+
+
 class ConstructionDocumentSerializer(serializers.ModelSerializer):
-    document_type = serializers.SlugRelatedField(slug_field='title', read_only=True)
+    file_size = serializers.SerializerMethodField()
+
+    def get_file_size(self, obj):
+        if obj.file:
+            return obj.file.size
+        return None
+
+    def get_document_type(self, obj):
+        return obj.document_type.title
 
     class Meta:
         model = ConstructionObjectDocument
@@ -49,9 +46,13 @@ class PersonSerializer(serializers.ModelSerializer):
 
 
 class ProjectOwnerCompanySerializer(serializers.ModelSerializer):
-    director = PersonSerializer()
-    contact_person = PersonSerializer()
-    personal = PersonSerializer(many=True)
+    personal = PersonSerializer(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        context = super().to_representation(instance)
+        context['director'] = PersonSerializer(instance.director).data
+        context['contact_person'] = PersonSerializer(instance.contact_person).data
+        return context
 
     class Meta:
         model = ProjectOwnerCompany
@@ -59,9 +60,13 @@ class ProjectOwnerCompanySerializer(serializers.ModelSerializer):
 
 
 class ProjectDeveloperCompanySerializer(serializers.ModelSerializer):
-    director = PersonSerializer()
-    contact_person = PersonSerializer()
-    personal = PersonSerializer(many=True)
+    personal = PersonSerializer(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        context = super().to_representation(instance)
+        context['director'] = PersonSerializer(instance.director).data
+        context['contact_person'] = PersonSerializer(instance.contact_person).data
+        return context
 
     class Meta:
         model = ProjectDeveloperCompany
@@ -69,9 +74,13 @@ class ProjectDeveloperCompanySerializer(serializers.ModelSerializer):
 
 
 class ConstructionCompanySerializer(serializers.ModelSerializer):
-    director = PersonSerializer()
-    contact_person = PersonSerializer()
-    personal = PersonSerializer(many=True)
+    personal = PersonSerializer(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        context = super().to_representation(instance)
+        context['director'] = PersonSerializer(instance.director).data
+        context['contact_person'] = PersonSerializer(instance.contact_person).data
+        return context
 
     class Meta:
         model = ConstructionCompany
