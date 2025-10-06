@@ -122,7 +122,7 @@ class IssuesView(viewsets.ModelViewSet):
     queryset = Issue.objects.all().select_related('issue_type', 'created_by', ).prefetch_related('photos')
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('review__object', 'issue_type')
+    filterset_fields = ('review', 'review__object', 'issue_type')
 
 
 class ReviewListView(generics.ListAPIView):

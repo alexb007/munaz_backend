@@ -72,13 +72,13 @@ class ReviewIssuePhotoInline(StackedInline):
     model = IssuePhoto
     extra = 0
     tab = True
-    readonly_fields = ['photo', 'photo_preview']
+    readonly_fields = ['photo_preview']
 
     def photo_preview(self, obj):
         return mark_safe('<img src="{url}" width="100px" height="100px" />'.format(
             url=obj.photo.url,
         )
-        )
+    )
 
 
 class ReviewReportPhotoInline(StackedInline):

@@ -114,9 +114,15 @@ class ReviewListSerializer(serializers.ModelSerializer):
     latitude = serializers.FloatField(read_only=True)
     longitude = serializers.FloatField(read_only=True)
 
+    def to_representation(self, instance):
+        context = super().to_representation(instance)
+        context['inspection_types'] = InspectionTypeSerializer(instance.inspection_types, many=True).data
+        context['reports'] = ReportSerializer(instance.reports, many=True, context=self.context).data
+        return context
+
     class Meta:
         model = Review
-        exclude = ('object',)
+        fields = '__all__'
 
 
 class BaseReviewSerializer(serializers.ModelSerializer):
