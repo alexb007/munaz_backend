@@ -95,6 +95,9 @@ class InspectionsView(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('object', 'assigned_to')
 
+    def get_queryset(self):
+        return Review.objects.all().select_related('assigned_to', 'object', 'created_by').prefetch_related('reports', 'inspection_types')
+
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
             return ReviewListSerializer
