@@ -11,13 +11,13 @@ from rest_framework.views import APIView
 from .authentication import BruteforceProtectedJWTAuthentication
 from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
-    ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType
+    ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment
 from .permissions import IsInspectorOrDeveloper
 from .serializers import UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
     IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
     InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
-    ConstructionCompanySerializer, ConstructionDocumentTypeSerializer
+    ConstructionCompanySerializer, ConstructionDocumentTypeSerializer, IssueActionSerializer, ReviewCommentSerializer
 from .utils import unblock_user, get_user_login_stats
 
 User = get_user_model()
@@ -96,7 +96,8 @@ class InspectionsView(viewsets.ModelViewSet):
     filterset_fields = ('object', 'assigned_to')
 
     def get_queryset(self):
-        return Review.objects.all().select_related('assigned_to', 'object', 'created_by').prefetch_related('reports', 'inspection_types')
+        return Review.objects.all().select_related('assigned_to', 'object', 'created_by').prefetch_related('reports',
+                                                                                                           'inspection_types')
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -336,3 +337,17 @@ def custom_token_obtain_pair(request):
                 authenticator.log_failed_attempt_for_nonexistent_user(username, ip_address, user_agent)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IssueActionViewSet(viewsets.ModelViewSet):
+    queryset = IssueAction.objects.all()
+    serializer_class = IssueActionSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('issue', 'created_by')
+
+
+class ReviewCommentViewSet(viewsets.ModelViewSet):
+    queryset = ReviewComment.objects.all()
+    serializer_class = ReviewCommentSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('review', 'created_by')

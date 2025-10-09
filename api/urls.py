@@ -6,7 +6,8 @@ from .views import (
     ReviewListView,
     StartReviewView, ReportCreateView, ReportPhotoCreateView, IssueCreateView, IssuePhotoCreateView, IssueUpdateView,
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
-    ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView, ConstructionDocumentTypeView
+    ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView,
+    ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet
 )
 
 router = DefaultRouter()
@@ -19,6 +20,8 @@ router.register('persons', PersonView, 'persons')
 router.register('project-companies', ProjectCompanyView, 'project-companies')
 router.register('owner-companies', ProjectOwnerCompanyView, 'owner-companies')
 router.register('construction-companies', ConstructionCompanyView, 'construction-companies')
+router.register('issue-actions', IssueActionViewSet, 'issue-actions')
+router.register('review-comments', ReviewCommentViewSet, 'review-comments')
 
 urlpatterns = [
     path('users/me/', ProfileView.as_view(), name='profile'),

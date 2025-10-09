@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .models import User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
-    ConstructionObjectDocumentType
+    ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -175,3 +175,27 @@ class IssueSerializer(serializers.ModelSerializer):
         model = Issue
         fields = '__all__'
         read_only_fields = ['created_by', 'created_at', 'updated_at']
+
+
+class IssueActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IssueAction
+        fields = '__all__'
+
+
+class IssueActionPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IssueActionPhoto
+        fields = '__all__'
+
+
+class ReviewCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReviewComment
+        fields = '__all__'
+
+
+class ReviewCommentPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReviewCommentPhoto
+        fields = '__all__'
