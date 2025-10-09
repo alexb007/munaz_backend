@@ -327,3 +327,73 @@ class LoginAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.timestamp} - {'Success' if self.successful else 'Failed'}"
+
+
+class IssueAction(models.Model):
+    ISSUE_ACTION_TYPE = (
+        ('resolved', 'Bartaraf etildi'),
+        ('rejected', 'Rad etish'),
+    )
+
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE)
+    action_type = models.CharField(choices=ISSUE_ACTION_TYPE, default='resolved', max_length=20, )
+    report = models.TextField(max_length=3000)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='issue_actions'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Kamchilik ustida amaliyotlar'
+        verbose_name = 'Kamchilik ustida amaliyot'
+
+
+class IssueActionPhoto(models.Model):
+    issue_action = models.ForeignKey(IssueAction, on_delete=models.CASCADE)
+    photo = models.ImageField(upload_to='report_photos/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Photo for report {self.issue_action.id}"
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name_plural = 'Amaliyot fotolari'
+        verbose_name = 'Amaliyot fotosi'
+
+
+class ReviewComment(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, verbose_name='Tekshiruv')
+    comment = models.TextField()
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='review_comments'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Tekshiruv hisoboti izohlari'
+        verbose_name = 'Tekshiruv hisoboti izohi'
+
+
+class ReviewCommentPhoto(models.Model):
+    review_comment = models.ForeignKey(ReviewComment, on_delete=models.CASCADE)
+    photo = models.ImageField(upload_to='comment_photos/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Photo for comment {self.review_comment.id}"
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name_plural = 'Amaliyot fotolari'
+        verbose_name = 'Amaliyot fotosi'

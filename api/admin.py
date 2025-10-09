@@ -145,3 +145,20 @@ class IssueAdmin(ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(ModelAdmin):
     inlines = [ReviewReportPhotoInline]
+
+
+class IssueActionPhotoInline(StackedInline):
+    model = IssueActionPhoto
+    extra = 0
+
+@admin.register(IssueAction)
+class IssueActionAdmin(ModelAdmin):
+    inlines = [IssueActionPhotoInline]
+
+class ReviewCommentPhotoInline(StackedInline):
+    model = ReviewCommentPhoto
+    extra = 0
+
+@admin.register(ReviewComment)
+class ReviewCommentAdmin(ModelAdmin):
+    inlines = [ReviewCommentPhotoInline]
