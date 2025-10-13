@@ -119,6 +119,7 @@ class PersonView(viewsets.ModelViewSet):
     queryset = Person.objects.all()
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('fullname', )
 
 
 class IssuesView(viewsets.ModelViewSet):
