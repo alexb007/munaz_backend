@@ -253,7 +253,7 @@ class ProjectCompanyView(viewsets.ModelViewSet):
     serializer_class = ProjectDeveloperCompanySerializer
     queryset = ProjectDeveloperCompany.objects.all()
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
+    search_fields = ('name', 'inn')
     permission_classes = [IsAuthenticated, ]
 
 
@@ -261,7 +261,7 @@ class ProjectOwnerCompanyView(viewsets.ModelViewSet):
     serializer_class = ProjectOwnerCompanySerializer
     queryset = ProjectOwnerCompany.objects.all()
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
+    search_fields = ('name', 'inn')
     permission_classes = [IsAuthenticated, ]
 
 
@@ -269,7 +269,7 @@ class ConstructionCompanyView(viewsets.ModelViewSet):
     serializer_class = ConstructionCompanySerializer
     queryset = ConstructionCompany.objects.all()
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
+    search_fields = ('name', 'inn')
     permission_classes = [IsAuthenticated, ]
 
 
