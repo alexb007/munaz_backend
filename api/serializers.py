@@ -2,7 +2,8 @@ from rest_framework import serializers
 
 from .models import User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
-    ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood
+    ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
+    GovermentProgram
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -211,4 +212,10 @@ class ReviewCommentSerializer(serializers.ModelSerializer):
 class ReviewCommentPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReviewCommentPhoto
+        fields = '__all__'
+
+
+class GovernmentProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GovermentProgram
         fields = '__all__'

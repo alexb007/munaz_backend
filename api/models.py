@@ -186,7 +186,7 @@ class ConstructionObject(models.Model):
         blank=True,
     )
     is_government = models.BooleanField(default=False, verbose_name=_('Davlat qurilish obyekti?'))
-    program = models.ForeignKey(GovermentProgram, on_delete=models.CASCADE, related_name='objects', verbose_name=_('Davlat dasturi'), null=True, blank=True)
+    program = models.ForeignKey(GovermentProgram, on_delete=models.CASCADE, related_name='projects', verbose_name=_('Davlat dasturi'), null=True, blank=True)
 
     def __str__(self):
         return self.name

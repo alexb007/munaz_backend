@@ -1,13 +1,15 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
+from .serializers import GovernmentProgramSerializer
 from .views import (
     ProfileView,
     ReviewListView,
     StartReviewView, ReportCreateView, ReportPhotoCreateView, IssueCreateView, IssuePhotoCreateView, IssueUpdateView,
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
     ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView,
-    ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet, NeighborhoodViewSet
+    ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet, NeighborhoodViewSet,
+    GovernmentProgramViewSet
 )
 
 router = DefaultRouter()
@@ -23,6 +25,7 @@ router.register('construction-companies', ConstructionCompanyView, 'construction
 router.register('issue-actions', IssueActionViewSet, 'issue-actions')
 router.register('review-comments', ReviewCommentViewSet, 'review-comments')
 router.register('neighborhoods', NeighborhoodViewSet, 'neighborhoods')
+router.register('programs', GovernmentProgramViewSet, 'programs')
 
 urlpatterns = [
     path('users/me/', ProfileView.as_view(), name='profile'),
