@@ -47,7 +47,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
-        fieldsets[0][1]['fields'] += ('role', )
+        fieldsets[0][1]['fields'] = {*fieldsets[0][1]['fields'], 'role'}
         return fieldsets
 
 
