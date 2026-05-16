@@ -6,6 +6,13 @@ from .models import User, ConstructionObject, Review, ReportPhoto, Report, Issue
 
 
 class UserSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        context = super().to_representation(instance)
+        if instance.person:
+            context['person'] = PersonSerializer(instance.person).data
+        return context
+
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'phone', 'avatar']

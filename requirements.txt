@@ -3,6 +3,10 @@ Django==5.2.1
 django-cors-headers==4.7.0
 django-crispy-forms==2.4
 django-jazzmin==3.0.1
+django-filter==25.2
+django-unfold==0.72.0
+django-webpush==0.3.6
+django-silk==5.4.3
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
 drf-yasg==1.21.10

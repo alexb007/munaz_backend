@@ -162,3 +162,19 @@ class ReviewCommentPhotoInline(StackedInline):
 @admin.register(ReviewComment)
 class ReviewCommentAdmin(ModelAdmin):
     inlines = [ReviewCommentPhotoInline]
+
+@admin.register(GovermentProgram)
+class GovernmentProgramAdmin(ModelAdmin):
+    pass
+
+@admin.register(Region)
+class RegionAdmin(ModelAdmin):
+    pass
+
+@admin.register(District)
+class DistrictAdmin(ModelAdmin):
+    pass
+
+@admin.register(Neighborhood)
+class NeighborhoodAdmin(ModelAdmin):
+    pass

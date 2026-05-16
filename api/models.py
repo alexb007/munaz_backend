@@ -4,6 +4,44 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
+class Region(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Viloyat'
+        verbose_name_plural = 'Viloyatlar'
+        ordering = ['name']
+
+
+class District(models.Model):
+    name = models.CharField(max_length=255)
+    region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Tuman|Shahar'
+        verbose_name_plural = 'Tuman|Shaharlar'
+        ordering = ['name']
+
+
+class Neighborhood(models.Model):
+    name = models.CharField(max_length=255)
+    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Mahalla'
+        verbose_name_plural = 'Mahallalar'
+        ordering = ['name']
+
+
 class User(AbstractUser):
     ROLES = (
         ('worker', 'Worker'),
@@ -104,20 +142,49 @@ class ConstructionCompany(models.Model):
         verbose_name = 'Qurilish tashkiloti'
 
 
+class GovermentProgram(models.Model):
+    name = models.CharField(max_length=512, verbose_name=_('Qaror to\'liq nomi'))
+    code = models.CharField(max_length=100, verbose_name=_('Qaror raqami'))
+    description = models.TextField(verbose_name=_('Qisqacha ma\'lumot'), null=True, blank=True)
+    budget = models.FloatField(verbose_name=_('Ajratilgan mablag\''), null=True, blank=True)
+
+    def __str__(self):
+        return self.code
+
+    class Meta:
+        verbose_name = 'Davlat dasturi'
+        verbose_name_plural = 'Davlat dasturlari'
+        ordering = ('name',)
+
+
 class ConstructionObject(models.Model):
-    name = models.CharField(max_length=255)
-    address = models.TextField()
+    name = models.CharField(max_length=255, verbose_name=_('Nomi'))
+    address = models.TextField(verbose_name=_('Manzil'))
+    neighborhood = models.ForeignKey(Neighborhood, on_delete=models.SET_NULL, null=True, verbose_name=_('Mahalla'))
     latitude = models.FloatField()
     longitude = models.FloatField()
+    radius = models.FloatField(default=200, verbose_name=_('Qurilish radiusi'))
+    building_count = models.PositiveSmallIntegerField(default=1, verbose_name=_('Obyektlar soni'))
+    budget = models.FloatField(null=True, blank=True, verbose_name=_('Ajratilgan mablag\' (mln. so\'mda)'))
+    contract_amount = models.FloatField(null=True, blank=True, verbose_name=_('Shartnoma qiymati (mln. so\'mda)'))
+    workers = models.PositiveSmallIntegerField(default=1, verbose_name=_('Ishchilar'), help_text=_('Qurilishga jalb qilingan ishchilar soni'))
+    machines =models.PositiveSmallIntegerField(default=0, verbose_name=_('Texnikalar'), help_text=_('Qurilishga jalb qilingan texnikalar soni'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    photo = models.ImageField(upload_to='objects/', blank=True, null=True)
+    photo = models.ImageField(upload_to='objects/', blank=True, null=True, verbose_name=_('Loyiha rasmi'))
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_objects')
     developer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='developed_objects')
-    owner_companies = models.ManyToManyField(ProjectOwnerCompany)
-    project_companies = models.ManyToManyField(ProjectDeveloperCompany)
-    construction_companies = models.ManyToManyField(ConstructionCompany)
+    owner_companies = models.ManyToManyField(ProjectOwnerCompany, verbose_name=_('Buyurtmachi tashkilotlar'))
+    project_companies = models.ManyToManyField(ProjectDeveloperCompany, verbose_name=_('Loyihachi tashkilotlar'))
+    construction_companies = models.ManyToManyField(ConstructionCompany, verbose_name=_('Qurilish tashkilotlari'))
+    attached_person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE,
+        related_name='attached_objects',
+        verbose_name=_('Ma\'sul hodim')
+    ),
     is_government = models.BooleanField(default=False, verbose_name=_('Davlat qurilish obyekti?'))
+    program = models.ForeignKey(GovermentProgram, on_delete=models.CASCADE, related_name='objects', verbose_name=_('Davlat dasturi'), null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -125,6 +192,7 @@ class ConstructionObject(models.Model):
     class Meta:
         verbose_name_plural = 'Qurilish Loyihalari'
         verbose_name = 'Qurilish Loyihasi'
+        ordering = ('name',)
 
 
 class ConstructionObjectDocumentType(models.Model):
