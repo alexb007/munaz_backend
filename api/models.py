@@ -83,15 +83,15 @@ class Person(models.Model):
 
 
 class ProjectOwnerCompany(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
+    name = models.CharField(max_length=512, verbose_name=_("Tashkilot nomi"))
+    description = models.TextField(verbose_name=_("Tashkilot haqida"), null=True, blank=True)
     inn = models.CharField(max_length=10, default='00000000')
-    director = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='o_companies_as_director')
-    contact_person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='o_companies_as_contact')
+    director = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='o_companies_as_director', verbose_name=_('Rahbari'))
+    contact_person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='o_companies_as_contact', verbose_name=_("Ma'sul hodim"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    personal = models.ManyToManyField(Person)
+    personal = models.ManyToManyField(Person, verbose_name=_('Hodimlar'))
 
     def __str__(self):
         return self.name
@@ -102,16 +102,16 @@ class ProjectOwnerCompany(models.Model):
 
 
 class ProjectDeveloperCompany(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    inn = models.CharField(max_length=10, default='00000000')
+    name = models.CharField(max_length=512, verbose_name=_('Tashkilot nomi'))
+    description = models.TextField(verbose_name=_('Tashkilot haqida'), null=True, blank=True)
+    inn = models.CharField(max_length=10, default='00000000',)
 
-    director = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='p_companies_as_director')
-    contact_person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='p_companies_as_contact')
+    director = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='p_companies_as_director', verbose_name=_('Rahbari'))
+    contact_person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='p_companies_as_contact', verbose_name=_("Ma'sul hodim"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    personal = models.ManyToManyField(Person)
+    personal = models.ManyToManyField(Person, verbose_name=_('Hodimlar'))
 
     def __str__(self):
         return self.name
@@ -122,12 +122,12 @@ class ProjectDeveloperCompany(models.Model):
 
 
 class ConstructionCompany(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
+    name = models.CharField(max_length=512, verbose_name=_('Tashkilot nomi'))
+    description = models.TextField(verbose_name=_("Tashkilot haqida"), blank=True, null=True)
     inn = models.CharField(max_length=10, default='00000000')
 
-    director = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='c_companies_as_director')
-    contact_person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='c_companies_as_contact')
+    director = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='c_companies_as_director', verbose_name=_("Rahbari"))
+    contact_person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='c_companies_as_contact', verbose_name=_("Ma'sul hodim"))
 
     personal = models.ManyToManyField(Person)
 

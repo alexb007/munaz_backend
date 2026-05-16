@@ -136,6 +136,7 @@ class ConstructionObjectAdmin(ModelAdmin):
     inlines = [DocumentInline]
     form = ConstructionObjectForm
     list_display = ('id', 'name', 'neighborhood')
+    list_display_links = ('id', 'name',)
     ordering = ('id', 'name')
 
 
