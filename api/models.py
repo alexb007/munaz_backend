@@ -158,7 +158,7 @@ class GovermentProgram(models.Model):
 
 
 class ConstructionObject(models.Model):
-    name = models.CharField(max_length=255, verbose_name=_('Nomi'))
+    name = models.CharField(max_length=512, verbose_name=_('Nomi'))
     address = models.TextField(verbose_name=_('Manzil'))
     neighborhood = models.ForeignKey(Neighborhood, on_delete=models.SET_NULL, null=True, verbose_name=_('Mahalla'))
     latitude = models.FloatField()
