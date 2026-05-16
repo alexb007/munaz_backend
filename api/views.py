@@ -11,13 +11,14 @@ from rest_framework.views import APIView
 from .authentication import BruteforceProtectedJWTAuthentication
 from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
-    ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment
+    ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment, Neighborhood
 from .permissions import IsInspectorOrDeveloper
 from .serializers import UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
     IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
     InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
-    ConstructionCompanySerializer, ConstructionDocumentTypeSerializer, IssueActionSerializer, ReviewCommentSerializer
+    ConstructionCompanySerializer, ConstructionDocumentTypeSerializer, IssueActionSerializer, ReviewCommentSerializer, \
+    NeighborhoodSerializer
 from .utils import unblock_user, get_user_login_stats
 
 User = get_user_model()
@@ -352,3 +353,9 @@ class ReviewCommentViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewCommentSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('review', 'created_by')
+
+class NeighborhoodViewSet(viewsets.ModelViewSet):
+    queryset = Neighborhood.objects.all()
+    serializer_class = NeighborhoodSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('district',)
