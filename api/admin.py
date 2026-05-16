@@ -135,6 +135,8 @@ class ProjectDeveloperCompanyAdmin(ModelAdmin):
 class ConstructionObjectAdmin(ModelAdmin):
     inlines = [DocumentInline]
     form = ConstructionObjectForm
+    list_display = ('id', 'name', 'neighborhood')
+    ordering = ('id', 'name')
 
 
 @admin.register(Issue)
