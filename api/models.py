@@ -97,8 +97,8 @@ class ProjectOwnerCompany(models.Model):
         return self.name
 
     class Meta:
-        verbose_name_plural = 'Loyiha tashkilotlari'
-        verbose_name = 'Loyiha tashkiloti'
+        verbose_name_plural = 'Buyurtmachi tashkilotlar'
+        verbose_name = 'Buyurtmachi tashkilot'
 
 
 class ProjectDeveloperCompany(models.Model):
