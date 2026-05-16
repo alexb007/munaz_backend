@@ -181,8 +181,10 @@ class ConstructionObject(models.Model):
         Person,
         on_delete=models.CASCADE,
         related_name='attached_objects',
-        verbose_name=_('Ma\'sul hodim')
-    ),
+        verbose_name=_('Ma\'sul hodim'),
+        null=True,
+        blank=True,
+    )
     is_government = models.BooleanField(default=False, verbose_name=_('Davlat qurilish obyekti?'))
     program = models.ForeignKey(GovermentProgram, on_delete=models.CASCADE, related_name='objects', verbose_name=_('Davlat dasturi'), null=True, blank=True)
 
