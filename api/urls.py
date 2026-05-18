@@ -9,7 +9,7 @@ from .views import (
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
     ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView,
     ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet, NeighborhoodViewSet,
-    GovernmentProgramViewSet
+    GovernmentProgramViewSet, PublicIssueViewSet
 )
 
 router = DefaultRouter()
@@ -18,6 +18,7 @@ router.register('documents', ConstructionObjectDocumentsView, 'documents')
 router.register('document-types', ConstructionDocumentTypeView, 'document-types')
 router.register('inspections', InspectionsView, 'inspections')
 router.register('issues', IssuesView, 'issues')
+router.register('public_issues', PublicIssueViewSet, 'public-issues')
 router.register('persons', PersonView, 'persons')
 router.register('project-companies', ProjectCompanyView, 'project-companies')
 router.register('owner-companies', ProjectOwnerCompanyView, 'owner-companies')

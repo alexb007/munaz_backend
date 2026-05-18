@@ -478,6 +478,7 @@ class PublicIssue(models.Model):
 
     issuer_fullname = models.CharField(max_length=255)
     issuer_phone = models.CharField(max_length=32)
+    construction = models.ForeignKey(ConstructionObject, on_delete=models.CASCADE, null=True)
     title = models.CharField(max_length=512)
     description = models.CharField(max_length=512)
     issue_level = models.CharField(max_length=10, choices=IssueLevel.choices, default=IssueLevel.GREEN, )

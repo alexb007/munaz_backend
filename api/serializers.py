@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
+from .models import PublicIssue, PublicIssuePhoto, User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
     GovermentProgram
@@ -218,4 +218,22 @@ class ReviewCommentPhotoSerializer(serializers.ModelSerializer):
 class GovernmentProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = GovermentProgram
+        fields = '__all__'
+
+class CreatePublicIssueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PublicIssue
+        fields = '__all__'
+
+
+class PublicIssuePhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PublicIssuePhoto
+        fields = '__all__'
+
+
+class PublicIssueSerializer(serializers.ModelSerializer):
+    photos = PublicIssuePhotoSerializer(read_only=True, many=True)
+    class Meta:
+        model = PublicIssue
         fields = '__all__'

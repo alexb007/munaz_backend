@@ -9,12 +9,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .authentication import BruteforceProtectedJWTAuthentication
-from .models import Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
+from .models import PublicIssue, Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
     ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment, Neighborhood, \
     GovermentProgram
 from .permissions import IsInspectorOrDeveloper
-from .serializers import UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
+from .serializers import CreatePublicIssueSerializer, PublicIssueSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
     IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
     InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
@@ -364,3 +364,10 @@ class NeighborhoodViewSet(viewsets.ModelViewSet):
 class GovernmentProgramViewSet(viewsets.ModelViewSet):
     queryset = GovermentProgram.objects.all()
     serializer_class = GovernmentProgramSerializer
+
+
+class PublicIssueViewSet(viewsets.ModelViewSet):
+    queryset = PublicIssue.objects.all()
+    serializer_class = CreatePublicIssueSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('construction', )
