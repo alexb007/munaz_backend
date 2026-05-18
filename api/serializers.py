@@ -112,14 +112,6 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
         fields = '__all__'#[f.name for f in ConstructionObject._meta.fields] + ['construction_companies', 'project_companies', 'owner_companies', 'financed']
 
 
-class ConstructionObjectListSerializer(serializers.ModelSerializer):
-    financed = serializers.FloatField(default=0)
-
-    class Meta:
-        model = ConstructionObject
-        exclude = ['project_companies', 'construction_companies', 'owner_companies']
-
-
 class InspectionTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = InspectionType
@@ -302,3 +294,17 @@ class ReportQuerySerializer(serializers.Serializer):
     period = serializers.DictField(required=False)
     period_by = serializers.CharField(default='created_at',required=False)
     blocks = ReportBlockSerializer(many=True)
+
+
+class ConstructionObjectListSerializer(serializers.ModelSerializer):
+    owner_companies = ProjectOwnerCompanySerializer(many=True, read_only=True)
+    project_companies = ProjectDeveloperCompanySerializer(many=True, read_only=True)
+    construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
+    financed = serializers.FloatField(default=0)
+    neighborhood = NeighborhoodSerializer(read_only=True)
+    owner = ProjectOwnerCompanySerializer(many=True, read_only=True)
+    program = GovernmentProgramSerializer(read_only=True)
+
+    class Meta:
+        model = ConstructionObject
+        fields = '__all__'
