@@ -262,3 +262,43 @@ class ConstructionDailyProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConstructionDailyProgress
         fields = '__all__'
+
+
+class AggregationSerializer(serializers.Serializer):
+    function = serializers.ChoiceField(
+        choices=["count", "sum", "avg", "min", "max"],
+        required=False,
+    )
+    field = serializers.CharField(required=False)
+    group_by = serializers.CharField(required=False)
+    
+
+class ReportBlockSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    type = serializers.ChoiceField(
+        choices=["row", "kpi", "table", "lineChart", "barChart", "pieChart"]
+    )
+    children = serializers.ListField(
+        child=serializers.DictField(), # Or another CategorySerializer instance
+        required=False
+    )
+    entity = serializers.CharField(required=False)
+    fields = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    aggregation = AggregationSerializer(required=False)
+    pagination = serializers.DictField(required=False)
+
+    def get_children(self, obj):
+        return ReportBlockSerializer(obj.children, many=True).data
+
+    class Meta:
+        fields = ["id", "type", "children", "entity", "fields", "aggregation", "pagination"]
+
+class ReportQuerySerializer(serializers.Serializer):
+    report_id = serializers.CharField()
+    filters = serializers.DictField(required=False)
+    period = serializers.DictField(required=False)
+    period_by = serializers.CharField(default='created_at',required=False)
+    blocks = ReportBlockSerializer(many=True)
