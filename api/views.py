@@ -411,6 +411,7 @@ class ReportQueryAPIView(APIView):
                     }
                     diff_qs = ReportQueryEngine.base_queryset(
                         entity=block["entity"],
+                        user=request.user,
                         diff=block.get("diff", False),
                         filters=data.get("filters"),
                         period=diff_period,
