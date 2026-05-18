@@ -39,7 +39,7 @@ class ProfileView(APIView):
         return Response(serializer.data)
 
 
-class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
+class ConstructionsView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ConstructionObjectSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
