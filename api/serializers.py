@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
+from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
     GovermentProgram
@@ -253,4 +253,12 @@ class ConstructionFinancingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConstructionFinancing
+        fields = '__all__'
+
+class ConstructionDailyProgressSerializer(serializers.ModelSerializer):
+    realtime = True
+    construction = ConstructionObjectSerializer(read_only=True)
+
+    class Meta:
+        model = ConstructionDailyProgress
         fields = '__all__'

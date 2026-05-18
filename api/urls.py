@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .serializers import GovernmentProgramSerializer
 from .views import (
     ConstructionFinancingViewSet,
+    ConstructionProgressViewSet,
     ProfileView,
     ReportQueryAPIView,
     ReviewListView,
@@ -30,6 +31,7 @@ router.register('review-comments', ReviewCommentViewSet, 'review-comments')
 router.register('neighborhoods', NeighborhoodViewSet, 'neighborhoods')
 router.register('programs', GovernmentProgramViewSet, 'programs')
 router.register('financing', ConstructionFinancingViewSet, 'financing')
+router.register('progress', ConstructionProgressViewSet, 'progress')
 
 urlpatterns = [
     path('users/me/', ProfileView.as_view(), name='profile'),

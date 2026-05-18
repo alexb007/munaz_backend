@@ -165,6 +165,7 @@ class ConstructionObject(models.Model):
     neighborhood = models.ForeignKey(Neighborhood, on_delete=models.SET_NULL, null=True, verbose_name=_('Mahalla'))
     latitude = models.FloatField()
     longitude = models.FloatField()
+    deadline = models.DateField(null=True, blank=True, verbose_name=_('Qurilish topshirish muddati'), help_text=_("Topshirish muddatining oxirgi sanasi"))
     radius = models.FloatField(default=200, verbose_name=_('Qurilish radiusi'))
     building_count = models.PositiveSmallIntegerField(default=1, verbose_name=_('Obyektlar soni'))
     budget = models.FloatField(null=True, blank=True, verbose_name=_('Ajratilgan mablag\' (mln. so\'mda)'))
@@ -515,6 +516,24 @@ class ConstructionFinancing(models.Model):
     person = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Ma'sul shaxs"))
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.construction.name
+
     class Meta:
         verbose_name_plural = _('Moliyalashtirish tarixi')
         verbose_name = _('Moliyalashtirilgan summa')
+
+class ConstructionDailyProgress(models.Model):
+    construction = models.ForeignKey(ConstructionObject, on_delete=models.CASCADE)
+    date = models.DateField(verbose_name=_('Sana'))
+    amount = models.PositiveBigIntegerField(default=0, verbose_name=_('Ish hajmi'))
+    workers = models.PositiveSmallIntegerField(default=0, verbose_name=_('Ishchilar soni'))
+    machines = models.PositiveSmallIntegerField(default=0, verbose_name=_('Texnikalar soni'))
+
+    class Meta:
+        verbose_name = _('Qurilish kunlik')
+        verbose_name_plural = _('Qurilish kunlik tarixi')
+
+    def __str__(self):
+        return self.construction.name
+

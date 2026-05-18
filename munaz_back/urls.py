@@ -35,8 +35,8 @@ schema_view = get_schema_view(
 )
 
 
-admin.site.site_header = "MuNaz Portali"
-admin.site.site_title = "Mualliflik Nazorati Portali"
+admin.site.site_header = "Nazorat Platformasi"
+admin.site.site_title = "Nazorat Platformasi"
 admin.site.index_title = "Xush Kelibsiz"
 urlpatterns = [
     path('admin/', admin.site.urls),

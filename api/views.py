@@ -11,12 +11,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .authentication import BruteforceProtectedJWTAuthentication
-from .models import ConstructionFinancing, PublicIssue, Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
+from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
     ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment, Neighborhood, \
     GovermentProgram
 from .permissions import IsInspectorOrDeveloper
-from .serializers import ConstructionFinancingSerializer, CreateConstructionFinancingSerializer, CreatePublicIssueSerializer, PublicIssueSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
+from .serializers import ConstructionDailyProgressSerializer, ConstructionFinancingSerializer, CreateConstructionFinancingSerializer, CreatePublicIssueSerializer, PublicIssueSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
     IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
     InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
@@ -363,13 +363,19 @@ class PublicIssueViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('construction', )
 
-class ConstructionFinancingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
+class ConstructionFinancingViewSet(AutoRelatedMixin, ReadWriteSerializerMixin, viewsets.ModelViewSet):
     queryset = ConstructionFinancing.objects.all()
     write_serializer_class = CreateConstructionFinancingSerializer
     read_serializer_class = ConstructionFinancingSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     fieldset_fields = ('construction', 'person')
 
+
+class ConstructionProgressViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
+    queryset = ConstructionDailyProgress.objects.all()
+    serializer_class = ConstructionDailyProgressSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    fieldset_fields = ('construction', 'date')
 
 
 class ReportQueryAPIView(APIView):
