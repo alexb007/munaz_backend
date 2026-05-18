@@ -54,9 +54,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'api.apps.ApiConfig',
+    'websocket',
     'drf_yasg',
     'webpush',
     'silk',
+
 ]
 
 CSRF_COOKIE_SECURE=False
@@ -179,7 +181,7 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = ["https://localhost", "http://192.168.100.11:8000", "http://185.203.237.57:8145", "http://muallifnazorat.uz", "http://muallifnazorat.uz:8145", "http://api.muallifnazorat.uz"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost", "http://192.168.100.11:8000", "http://185.203.237.57:8145", "http://muallifnazorat.uz", "http://muallifnazorat.uz:8145", "http://api.muallifnazorat.uz", "https://api.muallifnazorat.uz"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 UNFOLD = {

@@ -1,16 +1,32 @@
 """
-ASGI config for munaz_back project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
+ASGI entrypoint. Configures Django and then runs the application
+defined in the ASGI_APPLICATION setting.
 """
 
 import os
 
+import django
+from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'munaz_back.settings')
+import websocket
 
-application = get_asgi_application()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "munaz_back.settings")
+django.setup()
+django_asgi_app = get_asgi_application()
+
+from channels_auth_token_middlewares.middleware import SimpleJWTAuthTokenMiddleware
+
+application = ProtocolTypeRouter({
+    "http": django_asgi_app,
+    "websocket": AllowedHostsOriginValidator(
+        AuthMiddlewareStack(
+            SimpleJWTAuthTokenMiddleware(
+                URLRouter(websocket.routing.websocket_urlpatterns),
+                keyword="JWT",
+            )
+        )
+    ),
+})

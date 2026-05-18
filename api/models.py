@@ -158,6 +158,8 @@ class GovermentProgram(models.Model):
 
 
 class ConstructionObject(models.Model):
+    realtime = True
+
     name = models.CharField(max_length=512, verbose_name=_('Nomi'))
     address = models.TextField(verbose_name=_('Manzil'))
     neighborhood = models.ForeignKey(Neighborhood, on_delete=models.SET_NULL, null=True, verbose_name=_('Mahalla'))
@@ -237,6 +239,7 @@ class InspectionType(models.Model):
 
 
 class Review(models.Model):
+    realtime = True
     class Status(models.TextChoices):
         PLANNED = 'planned', _('Rejalashtirilgan')
         IN_PROGRESS = 'in_progress', _('Jarayonda')
@@ -273,6 +276,7 @@ class Review(models.Model):
 
 
 class Report(models.Model):
+    realtime = True
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
@@ -319,17 +323,18 @@ class IssueType(models.Model):
         verbose_name_plural = 'Kamchilik turlari'
         verbose_name = 'Kamchilik turi'
 
+class Status(models.TextChoices):
+    OPEN = 'open', _('Ochiq')
+    IN_PROGRESS = 'in_progress', _('Bartaraf etilmoqda')
+    RESOLVED = 'resolved', _('Bartaraf etildi')
+
+class IssueLevel(models.TextChoices):
+    RED = 'red', _('Qizil')
+    YELLOW = 'yellow', _('Sariq')
+    GREEN = 'green', _('Yashil')
 
 class Issue(models.Model):
-    class Status(models.TextChoices):
-        OPEN = 'open', _('Ochiq')
-        IN_PROGRESS = 'in_progress', _('Bartaraf etilmoqda')
-        RESOLVED = 'resolved', _('Bartaraf etildi')
-
-    class IssueLevel(models.TextChoices):
-        RED = 'red', _('Qizil')
-        YELLOW = 'yellow', _('Sariq')
-        GREEN = 'green', _('Yashil')
+    realtime = True
 
     review = models.ForeignKey(
         Review,
@@ -467,3 +472,37 @@ class ReviewCommentPhoto(models.Model):
         ordering = ['-uploaded_at']
         verbose_name_plural = 'Amaliyot fotolari'
         verbose_name = 'Amaliyot fotosi'
+
+class PublicIssue(models.Model):
+    realtime = True
+
+    issuer_fullname = models.CharField(max_length=255)
+    issuer_phone = models.CharField(max_length=32)
+    title = models.CharField(max_length=512)
+    description = models.CharField(max_length=512)
+    issue_level = models.CharField(max_length=10, choices=IssueLevel.choices, default=IssueLevel.GREEN, )
+    resolve_date = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Jamoatchilik qayd etgan muammolar'
+        verbose_name = 'Jamoatchilik qayd etgan muammo'
+
+
+class PublicIssuePhoto(models.Model):
+    issue = models.ForeignKey(
+        PublicIssue,
+        on_delete=models.CASCADE,
+        related_name='photos'
+    )
+    photo = models.ImageField(upload_to='public_issue_photos/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Photo for issue {self.issue.id}"
+
+    class Meta:
+        verbose_name_plural = 'Foto'
+        verbose_name = 'Foto'
