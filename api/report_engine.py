@@ -33,7 +33,7 @@ class ReportQueryEngine:
     @classmethod
     def base_queryset(cls, entity: str, user, filters, period, period_by='created_at', diff=False):
         model = cls.ENTITY_MAP[entity]
-        # qs = model.objects.filter(**{cls.SHOP_FILTER[entity]: shop})
+        qs = model.objects.all()
 
         if filters:
             qs = qs.filter(**filters)
