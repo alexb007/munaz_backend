@@ -392,7 +392,7 @@ class ReportQueryAPIView(APIView):
         else:
             qs = ReportQueryEngine.base_queryset(
                 entity=block["entity"],
-                shop=request.user.employee.shop,
+                user=request.user,
                 diff=block.get("diff", False),
                 filters=data.get("filters"),
                 period=data.get("period"),
