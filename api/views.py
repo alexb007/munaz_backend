@@ -39,11 +39,14 @@ class ProfileView(APIView):
         return Response(serializer.data)
 
 
-class ConstructionsView(viewsets.ModelViewSet):
+class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ConstructionObjectSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    queryset = ConstructionObject.objects.all().annotate(financed=Coalesce(Sum('constructionfinancing__amount'), 0, output_field=FloatField(default=0)))
+    queryset = ConstructionObject.objects.all().annotate(
+        financed=Coalesce(Sum('constructionfinancing__amount'), 0, output_field=FloatField(default=0)),
+        completed=Coalesce(Sum('constructiondailyprogress__amount'), 0, output_field=FloatField(default=0)),
+    )
     search_fields = ('name',)
 
     def get_serializer_class(self):

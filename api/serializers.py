@@ -106,6 +106,7 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
     project_companies = ProjectDeveloperCompanySerializer(many=True, read_only=True)
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
     financed = serializers.FloatField(default=0)
+    completed = serializers.FloatField(default=0)
 
     class Meta:
         model = ConstructionObject
@@ -301,6 +302,7 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
     project_companies = ProjectDeveloperCompanySerializer(many=True, read_only=True)
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
     financed = serializers.FloatField(default=0)
+    completed = serializers.FloatField(default=0)
     neighborhood = NeighborhoodSerializer(read_only=True)
     program = GovernmentProgramSerializer(read_only=True)
 
