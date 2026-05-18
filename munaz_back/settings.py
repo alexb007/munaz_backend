@@ -184,6 +184,18 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = ["https://localhost", "http://192.168.100.11:8000", "http://185.203.237.57:8145", "http://muallifnazorat.uz", "http://muallifnazorat.uz:8145", "http://api.muallifnazorat.uz", "https://api.muallifnazorat.uz"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('localhost', 6379)],
+            "capacity": 1000,
+            "expiry": 10,
+        },
+    },
+}
+
+
 UNFOLD = {
     "SITE_TITLE": "Mualliflik Nazorati",
     "SITE_HEADER": "Munaz",

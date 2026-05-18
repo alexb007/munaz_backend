@@ -4,7 +4,7 @@ import os
 import django
 
 from websocket.workers.db_listener import DBListenerWorker
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rocketcrm.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "munaz_back.settings")
 django.setup()
 POSTGRES_DSN = os.getenv(
     "POSTGRES_DSN",
