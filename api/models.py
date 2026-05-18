@@ -507,3 +507,14 @@ class PublicIssuePhoto(models.Model):
     class Meta:
         verbose_name_plural = 'Foto'
         verbose_name = 'Foto'
+
+class ConstructionFinancing(models.Model):
+    construction = models.ForeignKey(ConstructionObject, on_delete=models.CASCADE, verbose_name=_('Qurilish loyihasi'))
+    amount = models.PositiveBigIntegerField(default=0, verbose_name=_('Moliyalashtirilgan summa'))
+    date = models.DateTimeField(default=timezone.now, verbose_name=_('Moliyalashtirilgan sana'))
+    person = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Ma'sul shaxs"))
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = _('Moliyalashtirish tarixi')
+        verbose_name = _('Moliyalashtirilgan summa')

@@ -181,3 +181,16 @@ class DistrictAdmin(ModelAdmin):
 @admin.register(Neighborhood)
 class NeighborhoodAdmin(ModelAdmin):
     pass
+
+class PublicIssuePhotosInline(StackedInline):
+    model = PublicIssuePhoto
+    extra = 0
+
+@admin.register(PublicIssue)
+class PublicIssueAdmin(ModelAdmin):
+    inlines = [PublicIssuePhotosInline, ]
+    list_display = ['id', 'title', 'description', ]
+
+@admin.register(ConstructionFinancing)
+class ConstructionFinancingAdmin(ModelAdmin):
+    list_display = ['id', 'construction', 'date', 'amount', 'person']

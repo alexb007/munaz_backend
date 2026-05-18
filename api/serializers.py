@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import PublicIssue, PublicIssuePhoto, User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
+from .models import ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
     GovermentProgram
@@ -105,13 +105,16 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
     owner_companies = ProjectOwnerCompanySerializer(many=True, read_only=True)
     project_companies = ProjectDeveloperCompanySerializer(many=True, read_only=True)
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
+    financed = serializers.FloatField(default=0)
 
     class Meta:
         model = ConstructionObject
-        fields = '__all__'
+        fields = '__all__'#[f.name for f in ConstructionObject._meta.fields] + ['construction_companies', 'project_companies', 'owner_companies', 'financed']
 
 
 class ConstructionObjectListSerializer(serializers.ModelSerializer):
+    financed = serializers.FloatField(default=0)
+
     class Meta:
         model = ConstructionObject
         exclude = ['project_companies', 'construction_companies', 'owner_companies']
@@ -236,4 +239,18 @@ class PublicIssueSerializer(serializers.ModelSerializer):
     photos = PublicIssuePhotoSerializer(read_only=True, many=True)
     class Meta:
         model = PublicIssue
+        fields = '__all__'
+
+
+class CreateConstructionFinancingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConstructionFinancing
+        fields = '__all__'
+
+class ConstructionFinancingSerializer(serializers.ModelSerializer):
+    construction = ConstructionObjectSerializer(read_only=True)
+    person = PersonSerializer(read_only=True)
+
+    class Meta:
+        model = ConstructionFinancing
         fields = '__all__'

@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q, F
+from django.db.models import Q, F, FloatField, Sum
+from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
+from api.mixins import AutoRelatedMixin, ReadWriteSerializerMixin
 from rest_framework import status, generics, permissions, viewsets, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.generics import get_object_or_404, ListAPIView
@@ -9,12 +11,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .authentication import BruteforceProtectedJWTAuthentication
-from .models import PublicIssue, Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
+from .models import ConstructionFinancing, PublicIssue, Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
     ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment, Neighborhood, \
     GovermentProgram
 from .permissions import IsInspectorOrDeveloper
-from .serializers import CreatePublicIssueSerializer, PublicIssueSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
+from .serializers import ConstructionFinancingSerializer, CreateConstructionFinancingSerializer, CreatePublicIssueSerializer, PublicIssueSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
     IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
     InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
@@ -33,28 +35,17 @@ class ProfileView(APIView):
         return Response(serializer.data)
 
 
-class ConstructionsView(viewsets.ModelViewSet):
+class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ConstructionObjectSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    queryset = ConstructionObject.objects.all().annotate(financed=Coalesce(Sum('constructionfinancing__amount'), 0, output_field=FloatField(default=0)))
     search_fields = ('name',)
 
     def get_serializer_class(self):
         if self.action == 'list':
             return ConstructionObjectListSerializer
         return ConstructionObjectSerializer
-
-    def get_queryset(self):
-        queryset = ConstructionObject.objects.all().select_related('owner', )
-        if self.action == 'retrieve':
-            queryset = queryset.prefetch_related(
-                'owner_companies', 'owner_companies__director', 'owner_companies__contact_person',
-                'owner_companies__personal',
-                'project_companies', 'project_companies__director', 'project_companies__contact_person',
-                'project_companies__personal',
-                'construction_companies', 'construction_companies__director', 'construction_companies__contact_person',
-                'construction_companies__personal')
-        return queryset
 
     @action(detail=True, methods=['get'])
     def documents(self, request, pk=None, *args, **kwargs):
@@ -371,3 +362,79 @@ class PublicIssueViewSet(viewsets.ModelViewSet):
     serializer_class = CreatePublicIssueSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('construction', )
+
+class ConstructionFinancingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
+    queryset = ConstructionFinancing.objects.all()
+    write_serializer_class = CreateConstructionFinancingSerializer
+    read_serializer_class = ConstructionFinancingSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    fieldset_fields = ('construction', 'person')
+
+
+
+class ReportQueryAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def process_block(self, request, data, period, block, result):
+        if block["type"] == "row":
+            for subblock in block.get("children", []):
+                self.process_block(request, data, period, subblock, result)
+        else:
+            qs = ReportQueryEngine.base_queryset(
+                entity=block["entity"],
+                shop=request.user.employee.shop,
+                diff=block.get("diff", False),
+                filters=data.get("filters"),
+                period=data.get("period"),
+                period_by=data.get("period_by"),
+            )
+            diff_qs = None
+
+            if block["type"] == "kpi":
+                if period:
+                    range_from = datetime.fromisoformat(data.get("period", {}).get("from"))
+                    range_delta = datetime.fromisoformat(data.get("period", {}).get("to")) - range_from
+                    diff_period = {
+                        'from': (range_from - range_delta).isoformat() if data.get("period_by", None) != 'date' else (
+                                    range_from - range_delta).strftime("%Y-%m-%d"),
+                        'to': data.get("period", {}).get("from"),
+                    }
+                    diff_qs = ReportQueryEngine.base_queryset(
+                        entity=block["entity"],
+                        diff=block.get("diff", False),
+                        filters=data.get("filters"),
+                        period=diff_period,
+                        period_by=data.get("period_by"),
+                    )
+
+                result[block["id"]] = {
+                    "value": ReportQueryEngine.process_kpi(block, qs),
+                    "previous": ReportQueryEngine.process_kpi(block, diff_qs) if diff_qs else None
+                }
+
+            elif block["type"] == "lineChart":
+                result[block["id"]] = ReportQueryEngine.process_chart(block, qs)
+            elif block["type"] == "barChart":
+                result[block["id"]] = ReportQueryEngine.process_chart(block, qs)
+
+            elif block["type"] == "table":
+                result[block["id"]] = ReportQueryEngine.process_table(
+                    block, qs, request
+                )
+
+    def post(self, request):
+        serializer = ReportQuerySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        period = data.get("period", None)
+        result = {}
+
+        for block in data["blocks"]:
+            self.process_block(request, data, period, block, result)
+
+
+
+
+
+        return Response(result)

@@ -3,7 +3,9 @@ from rest_framework.routers import DefaultRouter
 
 from .serializers import GovernmentProgramSerializer
 from .views import (
+    ConstructionFinancingViewSet,
     ProfileView,
+    ReportQueryAPIView,
     ReviewListView,
     StartReviewView, ReportCreateView, ReportPhotoCreateView, IssueCreateView, IssuePhotoCreateView, IssueUpdateView,
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
@@ -27,9 +29,11 @@ router.register('issue-actions', IssueActionViewSet, 'issue-actions')
 router.register('review-comments', ReviewCommentViewSet, 'review-comments')
 router.register('neighborhoods', NeighborhoodViewSet, 'neighborhoods')
 router.register('programs', GovernmentProgramViewSet, 'programs')
+router.register('financing', ConstructionFinancingViewSet, 'financing')
 
 urlpatterns = [
     path('users/me/', ProfileView.as_view(), name='profile'),
+    path('report/query/', ReportQueryAPIView.as_view()),
     path('reviews/', ReviewListView.as_view(), name='review-list'),
     path('reviews/<int:review_id>/start/', StartReviewView.as_view(), name='start-review'),
 
