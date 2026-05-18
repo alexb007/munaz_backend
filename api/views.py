@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, FloatField, Sum
 from django.db.models.functions import Coalesce
@@ -10,13 +12,15 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.report_engine import ReportQueryEngine
+
 from .authentication import BruteforceProtectedJWTAuthentication
 from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
     ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
     ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment, Neighborhood, \
     GovermentProgram
 from .permissions import IsInspectorOrDeveloper
-from .serializers import ConstructionDailyProgressSerializer, ConstructionFinancingSerializer, CreateConstructionFinancingSerializer, CreatePublicIssueSerializer, PublicIssueSerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
+from .serializers import ConstructionDailyProgressSerializer, ConstructionFinancingSerializer, CreateConstructionFinancingSerializer, CreatePublicIssueSerializer, PublicIssueSerializer, ReportQuerySerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
     ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
     IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
     InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
