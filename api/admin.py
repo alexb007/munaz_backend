@@ -194,3 +194,7 @@ class PublicIssueAdmin(ModelAdmin):
 @admin.register(ConstructionFinancing)
 class ConstructionFinancingAdmin(ModelAdmin):
     list_display = ['id', 'construction', 'date', 'amount', 'person']
+
+@admin.register(ConstructionDailyProgress)
+class ConsturctionDailyProgressAdmin(ModelAdmin):
+    list_display = ['id', 'construction', 'date', 'amount', 'workers', 'machines']
