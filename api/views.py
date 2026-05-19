@@ -397,7 +397,7 @@ class ReportQueryAPIView(APIView):
                 entity=block["entity"],
                 user=request.user,
                 diff=block.get("diff", False),
-                filters=data.get("filters"),
+                filters=block.get("filters"),
                 period=data.get("period"),
                 period_by=data.get("period_by"),
             )
@@ -446,9 +446,5 @@ class ReportQueryAPIView(APIView):
 
         for block in data["blocks"]:
             self.process_block(request, data, period, block, result)
-
-
-
-
 
         return Response(result)
