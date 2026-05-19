@@ -3,7 +3,7 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, FloatField, Sum
 from django.db.models.functions import Coalesce
-from django_filters.rest_framework import DjangoFilterBackend
+from api.filters import ConstructionObjectFilter, UniversalDRFFilterBackend
 from api.mixins import AutoRelatedMixin, ReadWriteSerializerMixin
 from rest_framework import status, generics, permissions, viewsets, filters
 from rest_framework.decorators import action, api_view, permission_classes
@@ -15,17 +15,61 @@ from rest_framework.views import APIView
 from api.report_engine import ReportQueryEngine
 
 from .authentication import BruteforceProtectedJWTAuthentication
-from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, Review, Report, Issue, ReportPhoto, IssuePhoto, ConstructionObject, IssueType, \
-    ConstructionObjectDocument, InspectionType, ProjectDeveloperCompany, Person, ProjectOwnerCompany, \
-    ConstructionCompany, LoginAttempt, ConstructionObjectDocumentType, IssueAction, ReviewComment, Neighborhood, \
-    GovermentProgram
+from .models import (
+    ConstructionDailyProgress,
+    ConstructionFinancing,
+    PublicIssue,
+    Review,
+    Report,
+    Issue,
+    ReportPhoto,
+    IssuePhoto,
+    ConstructionObject,
+    IssueType,
+    ConstructionObjectDocument,
+    InspectionType,
+    ProjectDeveloperCompany,
+    Person,
+    ProjectOwnerCompany,
+    ConstructionCompany,
+    LoginAttempt,
+    ConstructionObjectDocumentType,
+    IssueAction,
+    ReviewComment,
+    Neighborhood,
+    GovermentProgram,
+)
 from .permissions import IsInspectorOrDeveloper
-from .serializers import ConstructionDailyProgressSerializer, ConstructionFinancingSerializer, CreateConstructionFinancingSerializer, CreatePublicIssueSerializer, PublicIssueSerializer, ReportQuerySerializer, UserSerializer, ReviewSerializer, ReportSerializer, IssueSerializer, \
-    ReportPhotoSerializer, IssuePhotoSerializer, ConstructionObjectSerializer, ConstructionDocumentSerializer, \
-    IssueTypeSerializer, ConstructionObjectListSerializer, ReviewListSerializer, BaseReviewSerializer, \
-    InspectionTypeSerializer, PersonSerializer, ProjectDeveloperCompanySerializer, ProjectOwnerCompanySerializer, \
-    ConstructionCompanySerializer, ConstructionDocumentTypeSerializer, IssueActionSerializer, ReviewCommentSerializer, \
-    NeighborhoodSerializer, GovernmentProgramSerializer
+from .serializers import (
+    ConstructionDailyProgressSerializer,
+    ConstructionFinancingSerializer,
+    CreateConstructionFinancingSerializer,
+    CreatePublicIssueSerializer,
+    PublicIssueSerializer,
+    ReportQuerySerializer,
+    UserSerializer,
+    ReviewSerializer,
+    ReportSerializer,
+    IssueSerializer,
+    ReportPhotoSerializer,
+    IssuePhotoSerializer,
+    ConstructionObjectSerializer,
+    ConstructionDocumentSerializer,
+    IssueTypeSerializer,
+    ConstructionObjectListSerializer,
+    ReviewListSerializer,
+    BaseReviewSerializer,
+    InspectionTypeSerializer,
+    PersonSerializer,
+    ProjectDeveloperCompanySerializer,
+    ProjectOwnerCompanySerializer,
+    ConstructionCompanySerializer,
+    ConstructionDocumentTypeSerializer,
+    IssueActionSerializer,
+    ReviewCommentSerializer,
+    NeighborhoodSerializer,
+    GovernmentProgramSerializer,
+)
 from .utils import unblock_user, get_user_login_stats
 
 User = get_user_model()
@@ -42,22 +86,33 @@ class ProfileView(APIView):
 class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ConstructionObjectSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_class = ConstructionObjectFilter
     queryset = ConstructionObject.objects.all().annotate(
-        financed=Coalesce(Sum('constructionfinancing__amount'), 0, output_field=FloatField(default=0)),
-        completed=Coalesce(Sum('constructiondailyprogress__amount'), 0, output_field=FloatField(default=0)),
+        financed=Coalesce(
+            Sum("constructionfinancing__amount"), 0, output_field=FloatField(default=0)
+        ),
+        completed=Coalesce(
+            Sum("constructiondailyprogress__amount"),
+            0,
+            output_field=FloatField(default=0),
+        ),
     )
-    search_fields = ('name',)
+    search_fields = ("name",)
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == "list":
             return ConstructionObjectListSerializer
         return ConstructionObjectSerializer
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def documents(self, request, pk=None, *args, **kwargs):
         queryset = self.get_object().documents.all()
-        return Response(ConstructionDocumentSerializer(queryset, many=True, context={'request': request}).data)
+        return Response(
+            ConstructionDocumentSerializer(
+                queryset, many=True, context={"request": request}
+            ).data
+        )
 
 
 class ConstructionDocumentsView(ListAPIView):
@@ -78,9 +133,14 @@ class ConstructionDocumentTypeView(viewsets.ModelViewSet):
 class ConstructionObjectDocumentsView(viewsets.ModelViewSet):
     serializer_class = ConstructionDocumentSerializer
     queryset = ConstructionObjectDocument.objects.all()
-    permission_classes = [IsAuthenticated, ]
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('construction', 'document_type',)
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = (
+        "construction",
+        "document_type",
+    )
 
 
 class InspectionTypesView(ListAPIView):
@@ -90,23 +150,30 @@ class InspectionTypesView(ListAPIView):
 
 class InspectionsView(viewsets.ModelViewSet):
     serializer_class = BaseReviewSerializer
-    queryset = Review.objects.all().select_related('assigned_to', )
+    queryset = Review.objects.all().select_related(
+        "assigned_to",
+    )
     permission_classes = [IsAuthenticated]
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('object', 'assigned_to')
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = ("object", "assigned_to")
 
     def get_queryset(self):
-        return Review.objects.all().select_related('assigned_to', 'object', 'created_by').prefetch_related('reports',
-                                                                                                           'inspection_types')
+        return (
+            Review.objects.all()
+            .select_related("assigned_to", "object", "created_by")
+            .prefetch_related("reports", "inspection_types")
+        )
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'retrieve':
+        if self.action == "list" or self.action == "retrieve":
             return ReviewListSerializer
         return BaseReviewSerializer
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def inspectors(self, request, pk=None, *args, **kwargs):
-        companies = ProjectDeveloperCompany.objects.filter(personal__in=[request.user.person])
+        companies = ProjectDeveloperCompany.objects.filter(
+            personal__in=[request.user.person]
+        )
         if companies is not None and companies.count() > 0:
             queryset = companies.first().personal.all()
             serializer = PersonSerializer(queryset, many=True)
@@ -118,35 +185,45 @@ class PersonView(viewsets.ModelViewSet):
     serializer_class = PersonSerializer
     queryset = Person.objects.all()
     permission_classes = [IsAuthenticated]
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('fullname', )
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    search_fields = ("fullname",)
 
 
 class IssuesView(viewsets.ModelViewSet):
     serializer_class = IssueSerializer
-    queryset = Issue.objects.all().select_related('issue_type', 'created_by', ).prefetch_related('photos')
+    queryset = (
+        Issue.objects.all()
+        .select_related(
+            "issue_type",
+            "created_by",
+        )
+        .prefetch_related("photos")
+    )
     permission_classes = [IsAuthenticated]
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('review', 'review__object', 'issue_type')
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = ("review", "review__object", "issue_type")
 
 
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('object',)
+    filter_backends = (UniversalDRFFilterBackend,)
+    filterset_fields = ("object",)
 
     def get_queryset(self):
         user = self.request.user
-        latitude = self.request.query_params.get('latitude')
-        longitude = self.request.query_params.get('longitude')
+        latitude = self.request.query_params.get("latitude")
+        longitude = self.request.query_params.get("longitude")
 
-        queryset = Review.objects.filter(
-            Q(assigned_to=user),
-            status__in=['planned', 'in_progress']
-        ).select_related('object', 'assigned_to').annotate(
-            latitude=F('object__latitude'),
-            longitude=F('object__longitude'),
+        queryset = (
+            Review.objects.filter(
+                Q(assigned_to=user), status__in=["planned", "in_progress"]
+            )
+            .select_related("object", "assigned_to")
+            .annotate(
+                latitude=F("object__latitude"),
+                longitude=F("object__longitude"),
+            )
         )
         #
         # if latitude and longitude:
@@ -167,10 +244,10 @@ class StartReviewView(APIView):
     def post(self, request, review_id):
         try:
             review = Review.objects.get(id=review_id, assigned_to=request.user)
-            if review.status != 'planned':
+            if review.status != "planned":
                 return Response(
-                    {'error': 'Review cannot be started'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Review cannot be started"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # Проверка геолокации
@@ -186,14 +263,13 @@ class StartReviewView(APIView):
             #             status=status.HTTP_400_BAD_REQUEST
             #         )
 
-            review.status = 'in_progress'
+            review.status = "in_progress"
             review.save()
             return Response(ReviewSerializer(review).data)
 
         except Review.DoesNotExist:
             return Response(
-                {'error': 'Review not found'},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Review not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
 
@@ -203,7 +279,7 @@ class ReportCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Review, pk=self.kwargs['review_id'])
+        review = get_object_or_404(Review, pk=self.kwargs["review_id"])
         serializer.save(review=review, created_by=self.request.user)
 
 
@@ -218,7 +294,7 @@ class ReportPhotoCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        report = get_object_or_404(Report, pk=self.kwargs['report_id'])
+        report = get_object_or_404(Report, pk=self.kwargs["report_id"])
         serializer.save(report=report)
 
 
@@ -228,7 +304,7 @@ class IssueCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Review, pk=self.kwargs['review_id'])
+        review = get_object_or_404(Review, pk=self.kwargs["review_id"])
         serializer.save(review=review, created_by=self.request.user)
 
 
@@ -238,7 +314,7 @@ class IssuePhotoCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        issue = get_object_or_404(Issue, pk=self.kwargs['issue_id'])
+        issue = get_object_or_404(Issue, pk=self.kwargs["issue_id"])
         serializer.save(issue=issue)
 
 
@@ -246,49 +322,54 @@ class IssueUpdateView(generics.UpdateAPIView):
     queryset = Issue.objects.all()
     serializer_class = IssueSerializer
     permission_classes = [permissions.IsAuthenticated, IsInspectorOrDeveloper]
-    http_method_names = ['patch']
+    http_method_names = ["patch"]
 
 
 class ProjectCompanyView(viewsets.ModelViewSet):
     serializer_class = ProjectDeveloperCompanySerializer
     queryset = ProjectDeveloperCompany.objects.all()
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name', 'inn')
-    permission_classes = [IsAuthenticated, ]
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    search_fields = ("name", "inn")
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
 
 class ProjectOwnerCompanyView(viewsets.ModelViewSet):
     serializer_class = ProjectOwnerCompanySerializer
     queryset = ProjectOwnerCompany.objects.all()
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name', 'inn')
-    permission_classes = [IsAuthenticated, ]
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    search_fields = ("name", "inn")
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
 
 class ConstructionCompanyView(viewsets.ModelViewSet):
     serializer_class = ConstructionCompanySerializer
     queryset = ConstructionCompany.objects.all()
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name', 'inn')
-    permission_classes = [IsAuthenticated, ]
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    search_fields = ("name", "inn")
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAdminUser])
 def unblock_user_view(request, user_id):
     try:
         user = User.objects.get(id=user_id)
         unblock_user(user)
-        return Response({
-            'message': f'User {user.username} has been unblocked'
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"User {user.username} has been unblocked"},
+            status=status.HTTP_200_OK,
+        )
     except User.DoesNotExist:
-        return Response({
-            'error': 'User not found'
-        }, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAdminUser])
 def user_login_stats(request, user_id):
     try:
@@ -296,12 +377,10 @@ def user_login_stats(request, user_id):
         stats = get_user_login_stats(user)
         return Response(stats, status=status.HTTP_200_OK)
     except User.DoesNotExist:
-        return Response({
-            'error': 'User not found'
-        }, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def custom_token_obtain_pair(request):
     """
@@ -311,31 +390,32 @@ def custom_token_obtain_pair(request):
 
     authenticator = BruteforceProtectedJWTAuthentication()
     ip_address = authenticator.get_client_ip(request)
-    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    user_agent = request.META.get("HTTP_USER_AGENT", "")
 
     serializer = TokenObtainPairSerializer(data=request.data)
-    print('asd')
+    print("asd")
 
     if serializer.is_valid():
         # Успешная аутентификация
         user = serializer.user
         LoginAttempt.objects.create(
-            user=user,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            successful=True
+            user=user, ip_address=ip_address, user_agent=user_agent, successful=True
         )
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
     else:
         print("ASD")
         # Неудачная аутентификация
-        username = request.data.get('username')
+        username = request.data.get("username")
         if username:
             try:
                 user = User.objects.get(username=username)
-                authenticator.handle_failed_attempt(username, ip_address, user_agent, request)
+                authenticator.handle_failed_attempt(
+                    username, ip_address, user_agent, request
+                )
             except User.DoesNotExist:
-                authenticator.log_failed_attempt_for_nonexistent_user(username, ip_address, user_agent)
+                authenticator.log_failed_attempt_for_nonexistent_user(
+                    username, ip_address, user_agent
+                )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -343,21 +423,23 @@ def custom_token_obtain_pair(request):
 class IssueActionViewSet(viewsets.ModelViewSet):
     queryset = IssueAction.objects.all()
     serializer_class = IssueActionSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('issue', 'created_by')
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = ("issue", "created_by")
 
 
 class ReviewCommentViewSet(viewsets.ModelViewSet):
     queryset = ReviewComment.objects.all()
     serializer_class = ReviewCommentSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('review', 'created_by')
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = ("review", "created_by")
+
 
 class NeighborhoodViewSet(viewsets.ModelViewSet):
     queryset = Neighborhood.objects.all()
     serializer_class = NeighborhoodSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('district',)
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = ("district",)
+
 
 class GovernmentProgramViewSet(viewsets.ModelViewSet):
     queryset = GovermentProgram.objects.all()
@@ -367,22 +449,25 @@ class GovernmentProgramViewSet(viewsets.ModelViewSet):
 class PublicIssueViewSet(viewsets.ModelViewSet):
     queryset = PublicIssue.objects.all()
     serializer_class = CreatePublicIssueSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('construction', )
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = ("construction",)
 
-class ConstructionFinancingViewSet(AutoRelatedMixin, ReadWriteSerializerMixin, viewsets.ModelViewSet):
+
+class ConstructionFinancingViewSet(
+    AutoRelatedMixin, ReadWriteSerializerMixin, viewsets.ModelViewSet
+):
     queryset = ConstructionFinancing.objects.all()
     write_serializer_class = CreateConstructionFinancingSerializer
     read_serializer_class = ConstructionFinancingSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    fieldset_fields = ('construction', 'person')
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    fieldset_fields = ("construction", "person")
 
 
 class ConstructionProgressViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
     queryset = ConstructionDailyProgress.objects.all()
     serializer_class = ConstructionDailyProgressSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    fieldset_fields = ('construction', 'date')
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    fieldset_fields = ("construction", "date")
 
 
 class ReportQueryAPIView(APIView):
@@ -405,12 +490,20 @@ class ReportQueryAPIView(APIView):
 
             if block["type"] == "kpi":
                 if period:
-                    range_from = datetime.fromisoformat(data.get("period", {}).get("from"))
-                    range_delta = datetime.fromisoformat(data.get("period", {}).get("to")) - range_from
+                    range_from = datetime.fromisoformat(
+                        data.get("period", {}).get("from")
+                    )
+                    range_delta = (
+                        datetime.fromisoformat(data.get("period", {}).get("to"))
+                        - range_from
+                    )
                     diff_period = {
-                        'from': (range_from - range_delta).isoformat() if data.get("period_by", None) != 'date' else (
-                                    range_from - range_delta).strftime("%Y-%m-%d"),
-                        'to': data.get("period", {}).get("from"),
+                        "from": (
+                            (range_from - range_delta).isoformat()
+                            if data.get("period_by", None) != "date"
+                            else (range_from - range_delta).strftime("%Y-%m-%d")
+                        ),
+                        "to": data.get("period", {}).get("from"),
                     }
                     diff_qs = ReportQueryEngine.base_queryset(
                         entity=block["entity"],
@@ -423,7 +516,11 @@ class ReportQueryAPIView(APIView):
 
                 result[block["id"]] = {
                     "value": ReportQueryEngine.process_kpi(block, qs),
-                    "previous": ReportQueryEngine.process_kpi(block, diff_qs) if diff_qs else None
+                    "previous": (
+                        ReportQueryEngine.process_kpi(block, diff_qs)
+                        if diff_qs
+                        else None
+                    ),
                 }
 
             elif block["type"] == "lineChart":
