@@ -197,14 +197,14 @@ CHANNEL_LAYERS = {
 
 
 UNFOLD = {
-    "SITE_TITLE": "Nazorat Platformasi",
-    "SITE_HEADER": "Nazorat Platformasi",
-    "SITE_SUBHEADER": "Nazorat Platformasi",
+    "SITE_TITLE": "Qurilish Nazorati Platformasi",
+    "SITE_HEADER": "Qurilish Nazorati",
+    "SITE_SUBHEADER": "Qurilish Nazorati",
     "SITE_DROPDOWN": [
         {
             "icon": "diamond",
-            "title": "m",
-            "link": "https://maullifnazorat.uz",
+            "title": "Qurilish nazorati",
+            "link": "https://muallifnazorat.uz",
         },
         # ...
     ],
