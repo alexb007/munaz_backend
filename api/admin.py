@@ -138,7 +138,7 @@ class ConstructionObjectAdmin(ModelAdmin):
     list_display = ('id', 'name', 'neighborhood', 'category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
     list_editable = ('category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
     list_display_links = ('id', 'name',)
-    list_filter = ('neighborhood',)
+    list_filter = ('neighborhood', 'program', 'attached_person', )
     ordering = ('id', 'name')
 
 
