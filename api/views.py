@@ -1,14 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q, F, FloatField, Sum
-from django.db.models.functions import Coalesce
+from django.db.models import Q, F, DecimalField, FloatField, Sum, Count, QuerySet
+from django.db.models.functions import Coalesce, NullIf
 from api.filters import ConstructionObjectFilter, UniversalDRFFilterBackend
 from api.mixins import AutoRelatedMixin, ReadWriteSerializerMixin
 from rest_framework import status, generics, permissions, viewsets, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.generics import get_object_or_404, ListAPIView
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,7 +37,7 @@ from .models import (
     IssueAction,
     ReviewComment,
     Neighborhood,
-    GovermentProgram,
+    GovermentProgram, IssueLevel, Assignment,
 )
 from .permissions import IsInspectorOrDeveloper
 from .serializers import (
@@ -68,9 +68,9 @@ from .serializers import (
     IssueActionSerializer,
     ReviewCommentSerializer,
     NeighborhoodSerializer,
-    GovernmentProgramSerializer,
+    GovernmentProgramSerializer, AssignmentSerializer,
 )
-from .utils import unblock_user, get_user_login_stats
+from .utils import unblock_user, get_user_login_stats, haversine_distance
 
 User = get_user_model()
 
@@ -84,21 +84,46 @@ class ProfileView(APIView):
 
 
 class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = ConstructionObjectSerializer
-    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_class = ConstructionObjectFilter
-    queryset = ConstructionObject.objects.all().annotate(
-        financed=Coalesce(
-            Sum("constructionfinancing__amount"), 0, output_field=FloatField(default=0)
-        ),
-        completed=Coalesce(
-            Sum("constructiondailyprogress__amount"),
-            0,
-            output_field=FloatField(default=0),
-        ),
-    )
+    queryset = ConstructionObject.objects.all()
     search_fields = ("name",)
+
+    def custom_queryset(self) -> QuerySet:
+        queryset = self.queryset
+        month = datetime.now().month
+        queryset = queryset.annotate(
+            financed=Coalesce(
+                Sum("constructionfinancing__amount"), 0, output_field=DecimalField(default=0)
+            ),
+            financed_p=Coalesce(
+                F("financed") / F('budget') * 100, 0, output_field=DecimalField(default=0)
+            ),
+
+            completed=Coalesce(
+                Sum("constructiondailyprogress__amount"),
+                0,
+                output_field=DecimalField(default=0),
+            ),
+            completed_p=Coalesce(
+                F("completed") / NullIf(F('financed'), 0) * 100, 0, output_field=DecimalField(default=0)
+            ),
+            p_reviews=Coalesce(
+                Count("review", filter=Q(review__inspection_types=1, review__status='completed', review__planned_date__month=month)), 0,
+                output_field=DecimalField(default=0)
+            ),
+            i_reviews=Coalesce(
+                Count("review", filter=Q(review__inspection_types=2) & Q(review__status='completed')), 0,
+                output_field=DecimalField(default=0)
+            ),
+            t_reviews=Coalesce(
+                Count("review", filter=Q(review__inspection_types=3) & Q(review__status='completed')), 0,
+                output_field=DecimalField(default=0)
+            )
+        )
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -396,15 +421,12 @@ def custom_token_obtain_pair(request):
     print("asd")
 
     if serializer.is_valid():
-        # Успешная аутентификация
         user = serializer.user
         LoginAttempt.objects.create(
             user=user, ip_address=ip_address, user_agent=user_agent, successful=True
         )
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
     else:
-        print("ASD")
-        # Неудачная аутентификация
         username = request.data.get("username")
         if username:
             try:
@@ -470,6 +492,12 @@ class ConstructionProgressViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
     fieldset_fields = ("construction", "date")
 
 
+class AssignmentViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
+    queryset = Assignment.objects.all()
+    serializer_class = AssignmentSerializer
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+
+
 class ReportQueryAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -483,6 +511,7 @@ class ReportQueryAPIView(APIView):
                 user=request.user,
                 diff=block.get("diff", False),
                 filters=block.get("filters"),
+                annotations=block.get("annotations"),
                 period=data.get("period"),
                 period_by=data.get("period_by"),
             )
@@ -494,8 +523,8 @@ class ReportQueryAPIView(APIView):
                         data.get("period", {}).get("from")
                     )
                     range_delta = (
-                        datetime.fromisoformat(data.get("period", {}).get("to"))
-                        - range_from
+                            datetime.fromisoformat(data.get("period", {}).get("to"))
+                            - range_from
                     )
                     diff_period = {
                         "from": (
@@ -510,6 +539,7 @@ class ReportQueryAPIView(APIView):
                         user=request.user,
                         diff=block.get("diff", False),
                         filters=data.get("filters"),
+                        annotations=block.get("annotations"),
                         period=diff_period,
                         period_by=data.get("period_by"),
                     )
@@ -545,3 +575,162 @@ class ReportQueryAPIView(APIView):
             self.process_block(request, data, period, block, result)
 
         return Response(result)
+
+
+class CalendarViewSet(viewsets.GenericViewSet):
+
+    queryset = ConstructionObject.objects.all()
+
+    @action(detail=False, methods=['get'])
+    def events(self, request):
+        """Get all calendar events for a given date range"""
+        start_date = request.query_params.get('start')
+        end_date = request.query_params.get('end')
+
+        try:
+            start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00')) if start_date else datetime.now()
+            end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00')) if end_date else start_date + timedelta(days=30)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid date format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        events = []
+
+        projects = self.get_queryset().filter(
+            deadline__gte=start_date,
+            deadline__lte=end_date
+        )
+        for project in projects:
+            events.append({
+                'id': project.pk,
+                'title': project.name,
+                'start': project.deadline.isoformat(),
+                'end': (project.deadline + timedelta(hours=1)).isoformat(),
+                'type': 'project_deadline',
+                'status': project.status,
+                'project_name': project.name,
+                'color': '#FF6B6B',
+                'extendedProps': {
+                    'project_id': project.pk,
+                    'start_date': project.created_at.isoformat() if project.created_at else None,
+                }
+            })
+
+        # Get inspections
+        inspections = Review.objects.filter(
+            planned_date__gte=start_date,
+            planned_date__lte=end_date
+        ).select_related('object')
+
+        for inspection in inspections:
+            events.append({
+                'id': inspection.pk,
+                'title': inspection.name,
+                'start': inspection.planned_date.isoformat(),
+                'end': (inspection.planned_date + timedelta(hours=2)).isoformat(),
+                'type': 'inspection',
+                'status': inspection.status,
+                'project_name': inspection.object.name,
+                'color': '#4ECDC4',
+                'extendedProps': {
+                    'inspection_id': inspection.pk,
+                    'project_id': inspection.object.pk,
+                    'inspector': inspection.assigned_to.username if inspection.assigned_to else None,
+                    'description': inspection.description
+                }
+            })
+
+        # Get issue resolve dates
+        issues = Issue.objects.filter(
+            resolve_date__gte=start_date,
+            resolve_date__lte=end_date,
+            status__in=['open', 'in_progress']
+        ).select_related('review').prefetch_related('review__object')
+
+        for issue in issues:
+            priority_colors = {
+                'low': '#FFD93D',
+                'medium': '#FF8C42',
+                'high': '#FF6B6B',
+                'critical': '#C92A2A'
+            }
+
+            events.append({
+                'id': issue.pk,
+                'title': issue.title,
+                'start': issue.resolve_date.isoformat(),
+                'end': (issue.resolve_date + timedelta(hours=1)).isoformat(),
+                'type': 'issue_resolve',
+                'status': issue.status,
+                'priority': issue.issue_level,
+                'project_name': issue.review.object.name,
+                'color': priority_colors.get(issue.issue_level, '#FFD93D'),
+                'extendedProps': {
+                    'issue_id': issue.pk,
+                    'project_id': issue.review.object.name,
+                    'assigned_to': issue.review.assigned_to.username if issue.review.assigned_to.username else None,
+                    'description': issue.description
+                }
+            })
+
+        return Response(events)
+
+# views.py
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Allow anonymous
+def report_issue(request):
+    project_id = request.data.get('project_id')
+    reporter_lat = request.data.get('latitude')
+    reporter_lon = request.data.get('longitude')
+    title = request.data.get('title')
+    description = request.data.get('description', '')
+    issue_type = request.data.get('issue_type', None)
+    issue_level = request.data.get('issue_level', IssueLevel.RED)
+
+    if not all([project_id, reporter_lat, reporter_lon, title]):
+        return Response({'error': 'Missing required fields'}, status=400)
+
+    try:
+        project = ConstructionObject.objects.get(pk=project_id)
+    except ConstructionObject.DoesNotExist:
+        return Response({'error': 'Project not found'}, status=404)
+
+    if project.latitude is None or project.longitude is None:
+        return Response({'error': 'Project location not configured'}, status=400)
+
+    # Validate location
+    distance = haversine_distance(
+        float(reporter_lat), float(reporter_lon),
+        project.latitude, project.longitude
+    )
+
+    # if distance > project.radius:
+    #     return Response({
+    #         'error': 'You are too far from the object',
+    #         'distance': round(distance, 1),
+    #         'allowed_radius': project.radius
+    #     }, status=403)
+
+    # Optional OneID integration: if request contains OneID token, verify and link user
+    user = None
+    oneid_token = request.data.get('oneid_token')
+    if oneid_token:
+        pass
+        # user = authenticate_with_oneid(oneid_token)  # Your OneID logic
+
+    issue = Issue.objects.create(
+        object=project,
+        title=title,
+        description=description,
+        status='open',
+        issue_type=issue_type,
+        issue_level=issue_level,
+    )
+
+    return Response({
+        'id': issue.id,
+        'message': 'Issue reported successfully',
+        'distance': round(distance, 1),
+    }, status=201)

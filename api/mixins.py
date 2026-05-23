@@ -265,9 +265,11 @@ class AutoRelatedMixin:
 
         return select_paths, prefetch_paths
 
-    def get_queryset(self) -> QuerySet:
-        qs: QuerySet = super().get_queryset()
+    def custom_queryset(self):
+        return None
 
+    def get_queryset(self) -> QuerySet:
+        qs: QuerySet = self.custom_queryset() or super().get_queryset()
         model = self._get_queryset_model(qs)
         if model is None:
             return qs

@@ -92,7 +92,7 @@ class ReviewAdmin(ModelAdmin):
 
 
 @admin.register(ConstructionObjectDocumentType)
-class ConstructionObjectAdmin(ModelAdmin):
+class ConstructionObjectAdminDocumentType(ModelAdmin):
     pass
 
 
@@ -135,7 +135,8 @@ class ProjectDeveloperCompanyAdmin(ModelAdmin):
 class ConstructionObjectAdmin(ModelAdmin):
     inlines = [DocumentInline]
     form = ConstructionObjectForm
-    list_display = ('id', 'name', 'neighborhood')
+    list_display = ('id', 'name', 'neighborhood', 'category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
+    list_editable = ('category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
     list_display_links = ('id', 'name',)
     ordering = ('id', 'name')
 
@@ -198,3 +199,8 @@ class ConstructionFinancingAdmin(ModelAdmin):
 @admin.register(ConstructionDailyProgress)
 class ConsturctionDailyProgressAdmin(ModelAdmin):
     list_display = ['id', 'construction', 'date', 'amount', 'workers', 'machines']
+
+@admin.register(Assignment)
+class AssignmentAdmin(ModelAdmin):
+    list_display = ('id', 'title', 'description', 'created_by', 'assigned_to', 'deadline', 'status')
+    list_display_links = ('id', 'title', 'description', 'created_by', 'assigned_to', 'deadline', 'status')

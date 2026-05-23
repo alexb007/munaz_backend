@@ -12,7 +12,7 @@ from .views import (
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
     ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView,
     ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet, NeighborhoodViewSet,
-    GovernmentProgramViewSet, PublicIssueViewSet
+    GovernmentProgramViewSet, PublicIssueViewSet, CalendarViewSet, report_issue, AssignmentViewSet
 )
 
 router = DefaultRouter()
@@ -32,8 +32,12 @@ router.register('neighborhoods', NeighborhoodViewSet, 'neighborhoods')
 router.register('programs', GovernmentProgramViewSet, 'programs')
 router.register('financing', ConstructionFinancingViewSet, 'financing')
 router.register('progress', ConstructionProgressViewSet, 'progress')
+router.register('assignments', AssignmentViewSet, basename='assignments')
+router.register(r'calendar', CalendarViewSet, basename='calendar')
 
-urlpatterns = [
+urlpatterns = router.urls
+
+urlpatterns += [
     path('users/me/', ProfileView.as_view(), name='profile'),
     path('report/query/', ReportQueryAPIView.as_view()),
     path('reviews/', ReviewListView.as_view(), name='review-list'),
@@ -47,6 +51,6 @@ urlpatterns = [
     path('inspection_types/', InspectionTypesView.as_view(), name='inspection-type-list'),
     path('issues/<int:issue_id>/photos/', IssuePhotoCreateView.as_view(), name='issue-photo-create'),
     path('issues/<int:pk>/', IssueUpdateView.as_view(), name='issue-update'),
+    path('report-issue/', report_issue, name='report-issue'),
 ]
 
-urlpatterns += router.urls

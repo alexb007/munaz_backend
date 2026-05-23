@@ -1,22 +1,23 @@
 from rest_framework import serializers
 
-from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
+from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, \
+    ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
-    GovermentProgram
+    GovermentProgram, Assignment
 
+
+class PersonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Person
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
-
-    def to_representation(self, instance):
-        context = super().to_representation(instance)
-        if instance.person:
-            context['person'] = PersonSerializer(instance.person).data
-        return context
+    person = PersonSerializer(read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'phone', 'avatar']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'phone', 'avatar', 'person']
 
 
 class IssueTypeSerializer(serializers.ModelSerializer):
@@ -53,20 +54,14 @@ class ConstructionDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class PersonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Person
-        fields = '__all__'
+
 
 
 class ProjectOwnerCompanySerializer(serializers.ModelSerializer):
     personal = PersonSerializer(many=True, read_only=True)
+    director = PersonSerializer(read_only=True)
+    contact_person = PersonSerializer(read_only=True)
 
-    def to_representation(self, instance):
-        context = super().to_representation(instance)
-        context['director'] = PersonSerializer(instance.director).data
-        context['contact_person'] = PersonSerializer(instance.contact_person).data
-        return context
 
     class Meta:
         model = ProjectOwnerCompany
@@ -75,12 +70,8 @@ class ProjectOwnerCompanySerializer(serializers.ModelSerializer):
 
 class ProjectDeveloperCompanySerializer(serializers.ModelSerializer):
     personal = PersonSerializer(many=True, read_only=True)
-
-    def to_representation(self, instance):
-        context = super().to_representation(instance)
-        context['director'] = PersonSerializer(instance.director).data
-        context['contact_person'] = PersonSerializer(instance.contact_person).data
-        return context
+    director = PersonSerializer(read_only=True)
+    contact_person = PersonSerializer(read_only=True)
 
     class Meta:
         model = ProjectDeveloperCompany
@@ -89,12 +80,8 @@ class ProjectDeveloperCompanySerializer(serializers.ModelSerializer):
 
 class ConstructionCompanySerializer(serializers.ModelSerializer):
     personal = PersonSerializer(many=True, read_only=True)
-
-    def to_representation(self, instance):
-        context = super().to_representation(instance)
-        context['director'] = PersonSerializer(instance.director).data
-        context['contact_person'] = PersonSerializer(instance.contact_person).data
-        return context
+    director = PersonSerializer(read_only=True)
+    contact_person = PersonSerializer(read_only=True)
 
     class Meta:
         model = ConstructionCompany
@@ -107,6 +94,7 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
     financed = serializers.FloatField(default=0)
     completed = serializers.FloatField(default=0)
+    p_reviews = serializers.FloatField(default=0)
 
     class Meta:
         model = ConstructionObject
@@ -118,17 +106,28 @@ class InspectionTypeSerializer(serializers.ModelSerializer):
         model = InspectionType
         fields = '__all__'
 
+class ReportPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReportPhoto
+        fields = ['id', 'photo', 'uploaded_at']
+        read_only_fields = ['uploaded_at']
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    photos = ReportPhotoSerializer(many=True, read_only=True)
+    created_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Report
+        fields = '__all__'
+        read_only_fields = ['created_by', 'created_at']
 
 class ReviewListSerializer(serializers.ModelSerializer):
     assigned_to = UserSerializer(read_only=True)
     latitude = serializers.FloatField(read_only=True)
     longitude = serializers.FloatField(read_only=True)
-
-    def to_representation(self, instance):
-        context = super().to_representation(instance)
-        context['inspection_types'] = InspectionTypeSerializer(instance.inspection_types, many=True).data
-        context['reports'] = ReportSerializer(instance.reports, many=True, context=self.context).data
-        return context
+    inspection_types = InspectionTypeSerializer( many=True)
+    reports = ReportSerializer(many=True)
 
     class Meta:
         model = Review
@@ -148,21 +147,9 @@ class ReviewSerializer(BaseReviewSerializer):
     longitude = serializers.FloatField(read_only=True)
 
 
-class ReportPhotoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ReportPhoto
-        fields = ['id', 'photo', 'uploaded_at']
-        read_only_fields = ['uploaded_at']
 
 
-class ReportSerializer(serializers.ModelSerializer):
-    photos = ReportPhotoSerializer(many=True, read_only=True)
-    created_by = UserSerializer(read_only=True)
 
-    class Meta:
-        model = Report
-        fields = '__all__'
-        read_only_fields = ['created_by', 'created_at']
 
 
 class IssuePhotoSerializer(serializers.ModelSerializer):
@@ -292,6 +279,7 @@ class ReportBlockSerializer(serializers.Serializer):
 class ReportQuerySerializer(serializers.Serializer):
     report_id = serializers.CharField()
     filters = serializers.DictField(required=False)
+    annotations = serializers.DictField(required=False)
     period = serializers.DictField(required=False)
     period_by = serializers.CharField(default='created_at',required=False)
     blocks = ReportBlockSerializer(many=True)
@@ -302,10 +290,20 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
     project_companies = ProjectDeveloperCompanySerializer(many=True, read_only=True)
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
     financed = serializers.FloatField(default=0)
+    financed_p = serializers.FloatField(default=0)
     completed = serializers.FloatField(default=0)
+    completed_p = serializers.FloatField(default=0)
+    p_reviews = serializers.FloatField(default=0)
+    i_reviews = serializers.FloatField(default=0)
+    t_reviews = serializers.FloatField(default=0)
     neighborhood = NeighborhoodSerializer(read_only=True)
     program = GovernmentProgramSerializer(read_only=True)
 
     class Meta:
         model = ConstructionObject
+        fields = '__all__'
+
+class AssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assignment
         fields = '__all__'

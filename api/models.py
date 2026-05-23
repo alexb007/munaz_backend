@@ -157,6 +157,21 @@ class GovermentProgram(models.Model):
         ordering = ('name',)
 
 
+class ContructionObjectCategory(models.IntegerChoices):
+    ONE = 0, _('I Toifa')
+    TWO = 1, _('II Toifa')
+    THREE = 2, _('III Toifa')
+    FOUR = 3, _('IV Toifa')
+
+class ConstructionObjectStatus(models.IntegerChoices):
+    PLANNED = 0, _('Rejalashtirilgan')
+    STARTED = 1, _('Boshlangan')
+    FINANCED = 2, _('Moliyalashtirilgan')
+    COMPLETED = 3, _('Qurilish tugallangan')
+    FINISHED = 4, _('Foydalanishga topshirilgan')
+    POSTPONED = 5, _("To'xtatilgan")
+    NOT_FINANCED = 6, _("Moliyalashtirish to'xtatilgan")
+
 class ConstructionObject(models.Model):
     realtime = True
 
@@ -165,6 +180,11 @@ class ConstructionObject(models.Model):
     neighborhood = models.ForeignKey(Neighborhood, on_delete=models.SET_NULL, null=True, verbose_name=_('Mahalla'))
     latitude = models.FloatField()
     longitude = models.FloatField()
+    category = models.PositiveSmallIntegerField(choices=ContructionObjectCategory.choices, default=ContructionObjectCategory.ONE)
+    p_reviews_p_m = models.PositiveSmallIntegerField(default=0)
+    i_reviews_p_m = models.PositiveSmallIntegerField(default=0)
+    t_reviews_p_m = models.PositiveSmallIntegerField(default=0)
+
     deadline = models.DateField(null=True, blank=True, verbose_name=_('Qurilish topshirish muddati'), help_text=_("Topshirish muddatining oxirgi sanasi"))
     radius = models.FloatField(default=200, verbose_name=_('Qurilish radiusi'))
     building_count = models.PositiveSmallIntegerField(default=1, verbose_name=_('Obyektlar soni'))
@@ -190,6 +210,7 @@ class ConstructionObject(models.Model):
     )
     is_government = models.BooleanField(default=False, verbose_name=_('Davlat qurilish obyekti?'))
     program = models.ForeignKey(GovermentProgram, on_delete=models.CASCADE, related_name='projects', verbose_name=_('Davlat dasturi'), null=True, blank=True)
+    status = models.PositiveSmallIntegerField(choices=ConstructionObjectStatus.choices, default=ConstructionObjectStatus.STARTED)
 
     def __str__(self):
         return self.name
@@ -340,7 +361,9 @@ class Issue(models.Model):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
-        related_name='issues'
+        related_name='issues',
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -355,6 +378,7 @@ class Issue(models.Model):
         null=True,
         related_name='created_issues'
     )
+    object = models.ForeignKey(ConstructionObject, on_delete=models.SET_NULL, null=True, blank=True)
     issue_type = models.ForeignKey(IssueType, on_delete=models.SET_NULL, null=True)
     issue_level = models.CharField(max_length=10, choices=IssueLevel.choices, default=IssueLevel.GREEN, )
     resolve_date = models.DateTimeField(null=True, blank=True)
@@ -536,4 +560,28 @@ class ConstructionDailyProgress(models.Model):
 
     def __str__(self):
         return self.construction.name
+
+class AssignmentStatus(models.IntegerChoices):
+    OPEN = 0, _('Ochiq')
+    COMPLETED = 1, _('Bartaraf etilgan')
+    POSTPONED = 2, _('Bajarilmagan')
+
+class Assignment(models.Model):
+    title = models.CharField(max_length=512, verbose_name=_('Sarlavha'))
+    description = models.TextField(max_length=3000, verbose_name=_('Murojaat matni'))
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='created_assignments', verbose_name=_('Yaratuvchi'))
+    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('Biriktirilgan hodim'))
+    object = models.ForeignKey(ConstructionObject, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('Qurilish'))
+    created_at = models.DateTimeField(auto_now_add=True,)
+    updated_at = models.DateTimeField(auto_now=True)
+    deadline = models.DateTimeField(null=True, blank=True, verbose_name=_('Muddati'))
+    status = models.PositiveSmallIntegerField(choices=AssignmentStatus.choices, default=AssignmentStatus.OPEN, verbose_name=_('Holati'))
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = _('Murojaat')
+        verbose_name_plural = _('Murojaatlar')
+        ordering = ('-deadline', 'created_at')
 
