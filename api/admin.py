@@ -5,6 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 from unfold.admin import ModelAdmin, StackedInline
+from unfold.contrib.filters.admin import RelatedDropdownFilter, ChoicesDropdownFilter
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
 from .forms import ConstructionObjectForm
@@ -78,7 +79,7 @@ class ReviewIssuePhotoInline(StackedInline):
         return mark_safe('<img src="{url}" width="100px" height="100px" />'.format(
             url=obj.photo.url,
         )
-    )
+        )
 
 
 class ReviewReportPhotoInline(StackedInline):
@@ -118,27 +119,30 @@ class InspectionTypeAdmin(ModelAdmin):
 
 @admin.register(ProjectOwnerCompany)
 class ProjectOwnerCompanyAdmin(ModelAdmin):
-    pass
-
+    search_fields = ["name"]
 
 @admin.register(ConstructionCompany)
 class ConstructionCompanyAdmin(ModelAdmin):
-    pass
-
+    search_fields = ["name"]
 
 @admin.register(ProjectDeveloperCompany)
 class ProjectDeveloperCompanyAdmin(ModelAdmin):
-    pass
-
+    search_fields = ["name"]
 
 @admin.register(ConstructionObject)
 class ConstructionObjectAdmin(ModelAdmin):
     inlines = [DocumentInline]
     form = ConstructionObjectForm
     list_display = ('id', 'name', 'neighborhood', 'category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
-    list_editable = ('category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
+    list_editable = ('category',)
     list_display_links = ('id', 'name',)
-    list_filter = ('neighborhood', 'program', 'attached_person', )
+    list_filter = (
+        ('program', RelatedDropdownFilter),
+        ('neighborhood', RelatedDropdownFilter),
+        ('category', ChoicesDropdownFilter),
+    )
+    list_filter_sheet = True
+    filter_vertical = ('owner_companies', 'construction_companies', 'project_companies')
     ordering = ('id', 'name')
 
 
@@ -156,50 +160,62 @@ class IssueActionPhotoInline(StackedInline):
     model = IssueActionPhoto
     extra = 0
 
+
 @admin.register(IssueAction)
 class IssueActionAdmin(ModelAdmin):
     inlines = [IssueActionPhotoInline]
+
 
 class ReviewCommentPhotoInline(StackedInline):
     model = ReviewCommentPhoto
     extra = 0
 
+
 @admin.register(ReviewComment)
 class ReviewCommentAdmin(ModelAdmin):
     inlines = [ReviewCommentPhotoInline]
+
 
 @admin.register(GovermentProgram)
 class GovernmentProgramAdmin(ModelAdmin):
     pass
 
+
 @admin.register(Region)
 class RegionAdmin(ModelAdmin):
     pass
+
 
 @admin.register(District)
 class DistrictAdmin(ModelAdmin):
     pass
 
+
 @admin.register(Neighborhood)
 class NeighborhoodAdmin(ModelAdmin):
     pass
 
+
 class PublicIssuePhotosInline(StackedInline):
     model = PublicIssuePhoto
     extra = 0
+
 
 @admin.register(PublicIssue)
 class PublicIssueAdmin(ModelAdmin):
     inlines = [PublicIssuePhotosInline, ]
     list_display = ['id', 'title', 'description', ]
 
+
 @admin.register(ConstructionFinancing)
 class ConstructionFinancingAdmin(ModelAdmin):
     list_display = ['id', 'construction', 'date', 'amount', 'person']
 
+
 @admin.register(ConstructionDailyProgress)
 class ConsturctionDailyProgressAdmin(ModelAdmin):
     list_display = ['id', 'construction', 'date', 'amount', 'workers', 'machines']
+
 
 @admin.register(Assignment)
 class AssignmentAdmin(ModelAdmin):
