@@ -141,7 +141,7 @@ class ConstructionObjectAdmin(ModelAdmin):
         ('neighborhood', RelatedDropdownFilter),
         ('category', ChoicesDropdownFilter),
     )
-    list_filter_sheet = True
+    list_filter_submit = True
     filter_vertical = ('owner_companies', 'construction_companies', 'project_companies')
     ordering = ('id', 'name')
 
