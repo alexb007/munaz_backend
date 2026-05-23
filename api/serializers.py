@@ -92,9 +92,9 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
     owner_companies = ProjectOwnerCompanySerializer(many=True, read_only=True)
     project_companies = ProjectDeveloperCompanySerializer(many=True, read_only=True)
     construction_companies = ConstructionCompanySerializer(many=True, read_only=True)
-    financed = serializers.FloatField(default=0)
-    completed = serializers.FloatField(default=0)
-    p_reviews = serializers.FloatField(default=0)
+    financed = serializers.FloatField(default=0, read_only=True)
+    completed = serializers.FloatField(default=0, read_only=True)
+    p_reviews = serializers.FloatField(default=0, read_only=True)
 
     class Meta:
         model = ConstructionObject
