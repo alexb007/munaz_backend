@@ -104,7 +104,7 @@ class DocumentInline(StackedInline):
 
 @admin.register(Person)
 class PersonAdmin(ModelAdmin):
-    pass
+    search_fields = ['fullname']
 
 
 @admin.register(IssueType)
@@ -131,6 +131,8 @@ class ProjectDeveloperCompanyAdmin(ModelAdmin):
 
 @admin.register(ConstructionObject)
 class ConstructionObjectAdmin(ModelAdmin):
+    search_fields = ['name']
+    autocomplete_fields = ['attached_person']
     inlines = [DocumentInline]
     form = ConstructionObjectForm
     list_display = ('id', 'name', 'neighborhood', 'category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
@@ -140,9 +142,12 @@ class ConstructionObjectAdmin(ModelAdmin):
         ('program', RelatedDropdownFilter),
         ('neighborhood', RelatedDropdownFilter),
         ('category', ChoicesDropdownFilter),
+        ('owner_companies', RelatedDropdownFilter),
+        ('construction_companies', RelatedDropdownFilter),
+        ('project_companies', RelatedDropdownFilter),
     )
     list_filter_submit = True
-    filter_vertical = ('owner_companies', 'construction_companies', 'project_companies')
+    filter_vertical = ('owner_companies', 'construction_companies', 'project_companies',)
     ordering = ('id', 'name')
 
 
