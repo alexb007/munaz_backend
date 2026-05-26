@@ -492,10 +492,11 @@ class ConstructionProgressViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
     fieldset_fields = ("construction", "date")
 
 
-class AssignmentViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
+class AssignmentViewSet(AutoRelatedMixin, ReadWriteSerializerMixin, viewsets.ModelViewSet):
     queryset = Assignment.objects.all()
     serializer_class = AssignmentSerializer
     filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    fieldset_fields = ("object", "deadline")
 
 
 class ReportQueryAPIView(APIView):
