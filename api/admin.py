@@ -135,8 +135,8 @@ class ConstructionObjectAdmin(ModelAdmin):
     autocomplete_fields = ['attached_person']
     inlines = [DocumentInline]
     form = ConstructionObjectForm
-    list_display = ('id', 'name', 'neighborhood', 'category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
-    list_editable = ('category',)
+    list_display = ('id', 'name', 'created_at', 'updated_at', 'address', 'neighborhood', 'category', 'p_reviews_p_m', 'i_reviews_p_m', 't_reviews_p_m')
+    list_editable = ('category', 'building_count')
     list_display_links = ('id', 'name',)
     list_filter = (
         ('program', RelatedDropdownFilter),

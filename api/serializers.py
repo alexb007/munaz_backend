@@ -303,7 +303,21 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
         model = ConstructionObject
         fields = '__all__'
 
+class CreateAssignmentSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        context = super().to_representation(instance)
+        context = ConstructionObjectListSerializer(instance.object, context=self.request['context']).data if instance.object else None
+        return context
+
+    class Meta:
+        model = Assignment
+        fields = '__all__'
+
 class AssignmentSerializer(serializers.ModelSerializer):
+
+    object = ConstructionObjectListSerializer(read_only=True)
+
     class Meta:
         model = Assignment
         fields = '__all__'

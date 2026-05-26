@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'webpush',
     'silk',
-
+    'import_export',
 ]
 
 CSRF_COOKIE_SECURE=False
