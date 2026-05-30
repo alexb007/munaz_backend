@@ -218,6 +218,7 @@ class ConstructionObjectAdmin(ModelAdmin):
         ('owner_companies', RelatedDropdownFilter),
         ('construction_companies', RelatedDropdownFilter),
         ('project_companies', RelatedDropdownFilter),
+        ('attached_person', RelatedDropdownFilter),
     )
     list_filter_submit = True
     filter_vertical = ('owner_companies', 'construction_companies', 'project_companies',)
