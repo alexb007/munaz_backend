@@ -27,6 +27,8 @@ class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
     change_list_template = 'admin/auth/user/change_list.html'
+    list_display = ('username', 'first_name', 'last_name', 'role')
+    list_display_links = ('username', 'first_name', 'last_name', 'role')
 
     def get_urls(self):
         """Injects custom generation route into default user admin URLs."""
