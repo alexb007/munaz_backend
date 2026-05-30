@@ -1,26 +1,107 @@
-from django.contrib import admin
+import csv
+import io
+import uuid
+
+from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.http import StreamingHttpResponse, HttpResponse
+from django.shortcuts import redirect, render
+from django.urls import path
+from django.utils.crypto import get_random_string
 from django.utils.safestring import mark_safe
+from twisted.protocols.wire import Echo
 from unfold.admin import ModelAdmin, StackedInline
 from unfold.contrib.filters.admin import RelatedDropdownFilter, ChoicesDropdownFilter
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
-from .forms import ConstructionObjectForm
+from .forms import ConstructionObjectForm, GenerateUsersForm
 from .models import *
 
 
-# Register your models here.
+@admin.register(User)
+class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
+    change_list_template = 'admin/auth/user/change_list.html'
 
-class CustomUserAdmin(UserAdmin):
-    model = User
-    list_display = ['email', 'username', 'phone', 'is_staff', 'role']
-    fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('phone',)}),
-    )
+    def get_urls(self):
+        """Injects custom generation route into default user admin URLs."""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'generate-users/',
+                self.admin_site.admin_view(self.generate_users_view),
+                name='generate_users'
+            ),
+        ]
+        return custom_urls + urls
 
+    def generate_users_view(self, request):
+        if request.method == 'POST':
+            form = GenerateUsersForm(request.POST)
+            if form.is_valid():
+                num_users = form.cleaned_data['num_users']
+
+                # 1. Create an in-memory text buffer for the CSV
+                buffer = io.StringIO()
+                writer = csv.writer(buffer)
+
+                # Write CSV header row
+                writer.writerow(['Username', 'Email', 'First Name', 'Last Name'])
+
+                # 2. Build the users list in memory first (extremely fast)
+                users_to_create = []
+                csv_rows = []
+
+                for _ in range(num_users):
+                    unique_id = uuid.uuid4().hex[:8]
+                    username = f"user_{unique_id}"
+                    email = f"{username}@example.com"
+                    first_name = f"First_{unique_id}"
+                    last_name = f"Last_{unique_id}"
+
+                    # Instantiate User objects without saving to database yet
+                    user_obj = User(
+                        username=username,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name,
+                    )
+                    # Set standard unusable or dummy encrypted password
+                    password = get_random_string(14)
+                    user_obj.set_password(password)
+
+                    users_to_create.append(user_obj)
+                    csv_rows.append([username, email, first_name, last_name, password])
+
+                # 3. Save ALL users to the database in a SINGLE database query
+                User.objects.bulk_create(users_to_create)
+
+                # 4. Write all rows to the CSV buffer
+                writer.writerows(csv_rows)
+
+                # 5. Return the file download response
+                response = HttpResponse(buffer.getvalue(), content_type="text/csv")
+                response['Content-Disposition'] = f'attachment; filename="generated_users_{num_users}.csv"'
+                return response
+        else:
+            form = GenerateUsersForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            'form': form,
+            'opts': self.model._meta,
+        }
+        return render(request, "admin/generate_users.html", context)
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        fieldsets[0][1]['fields'] = {*fieldsets[0][1]['fields'], 'role'}
+        return fieldsets
 
 admin.site.unregister(Group)
 
@@ -38,18 +119,6 @@ class LoginAttemptAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-
-@admin.register(User)
-class UserAdmin(BaseUserAdmin, ModelAdmin):
-    # Forms loaded from `unfold.forms`
-    form = UserChangeForm
-    add_form = UserCreationForm
-    change_password_form = AdminPasswordChangeForm
-
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super().get_fieldsets(request, obj)
-        fieldsets[0][1]['fields'] = {*fieldsets[0][1]['fields'], 'role'}
-        return fieldsets
 
 
 @admin.register(Group)

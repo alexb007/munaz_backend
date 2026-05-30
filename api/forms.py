@@ -23,3 +23,13 @@ class ConstructionObjectForm(forms.ModelForm):
             if len(diff) > 0:
                 raise forms.ValidationError("Iltimos barcha majburiy hujjatlarni biriktiring")
             return self.cleaned_data
+
+
+class GenerateUsersForm(forms.Form):
+    num_users = forms.IntegerField(
+        label="Number of users to generate",
+        min_value=1,
+        max_value=10000,
+        initial=100,
+        help_text="Enter the number of random users to create and export."
+    )
