@@ -60,6 +60,9 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    def __str__(self):
+        return super().__str__() + f" ({self.get_full_name()})"
+
     class Meta:
         verbose_name_plural = 'Foydalanuvchilar'
         verbose_name = 'Foydalanuvchi'
