@@ -12,6 +12,8 @@ from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils.crypto import get_random_string
 from django.utils.safestring import mark_safe
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 from twisted.protocols.wire import Echo
 from unfold.admin import ModelAdmin, StackedInline
 from unfold.contrib.filters.admin import RelatedDropdownFilter, ChoicesDropdownFilter
@@ -20,9 +22,15 @@ from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationFo
 from .forms import ConstructionObjectForm, GenerateUsersForm
 from .models import *
 
+class UserResource(resources.ModelResource):
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'password')
+        export_order = fields
 
 @admin.register(User)
-class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
+class CustomUserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
+    resource_classes = [UserResource]
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
