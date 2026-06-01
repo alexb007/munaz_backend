@@ -94,7 +94,7 @@ class ReportQueryEngine:
         if annotations:
             mapped_annotations = _annotateToMap(annotations)
             queryset = queryset.annotate(**mapped_annotations)
-
+        print(filters)
         if filters:
             queryset = queryset.filter(**filters)
 

@@ -159,19 +159,12 @@ class IssuePhotoSerializer(serializers.ModelSerializer):
         read_only_fields = ['uploaded_at']
 
 
-class IssueSerializer(serializers.ModelSerializer):
-    photos = IssuePhotoSerializer(many=True, read_only=True)
-    created_by = UserSerializer(read_only=True)
-
+class CreateIssueSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         context = super().to_representation(instance)
         context['issue_type'] = IssueTypeSerializer(instance.issue_type, read_only=True, ).data
         return context
 
-    class Meta:
-        model = Issue
-        fields = '__all__'
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
 
 
 class IssueActionSerializer(serializers.ModelSerializer):
@@ -321,3 +314,16 @@ class AssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assignment
         fields = '__all__'
+
+
+class IssueSerializer(serializers.ModelSerializer):
+    photos = IssuePhotoSerializer(many=True, read_only=True)
+    issue_type = IssueTypeSerializer(read_only=True)
+    object = ConstructionObjectListSerializer(read_only=True)
+    review = ReviewListSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Issue
+        fields = '__all__'
+        read_only_fields = ['created_by', 'created_at', 'updated_at']

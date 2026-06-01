@@ -14,6 +14,7 @@ from django.utils.crypto import get_random_string
 from django.utils.safestring import mark_safe
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+from import_export.formats import base_formats
 from twisted.protocols.wire import Echo
 from unfold.admin import ModelAdmin, StackedInline
 from unfold.contrib.filters.admin import RelatedDropdownFilter, ChoicesDropdownFilter
@@ -37,6 +38,11 @@ class CustomUserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     change_list_template = 'admin/auth/user/change_list.html'
     list_display = ('username', 'first_name', 'last_name', 'role')
     list_display_links = ('username', 'first_name', 'last_name', 'role')
+
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        kwargs['encoding'] = 'utf-8'
+        print('ENCODING')
+        return kwargs
 
     def get_urls(self):
         """Injects custom generation route into default user admin URLs."""

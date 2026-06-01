@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, DecimalField, FloatField, Sum, Count, QuerySet
 from django.db.models.functions import Coalesce, NullIf
+from django_filters import OrderingFilter
+
 from api.filters import ConstructionObjectFilter, UniversalDRFFilterBackend
 from api.mixins import AutoRelatedMixin, ReadWriteSerializerMixin
 from rest_framework import status, generics, permissions, viewsets, filters
@@ -179,8 +181,8 @@ class InspectionsView(viewsets.ModelViewSet):
         "assigned_to",
     )
     permission_classes = [IsAuthenticated]
-    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
-    filterset_fields = ("object", "assigned_to")
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = ("object", "assigned_to", 'inspection_types',)
 
     def get_queryset(self):
         return (
@@ -225,8 +227,8 @@ class IssuesView(viewsets.ModelViewSet):
         .prefetch_related("photos")
     )
     permission_classes = [IsAuthenticated]
-    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
-    filterset_fields = ("review", "review__object", "issue_type")
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = ("review", "review__object", "issue_type",)
 
 
 class ReviewListView(generics.ListAPIView):
@@ -503,6 +505,7 @@ class ReportQueryAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def process_block(self, request, data, period, block, result):
+        print(block)
         if block["type"] == "row":
             for subblock in block.get("children", []):
                 self.process_block(request, data, period, subblock, result)
