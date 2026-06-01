@@ -312,7 +312,12 @@ class ConsturctionDailyProgressAdmin(ModelAdmin):
     list_display = ['id', 'construction', 'date', 'amount', 'workers', 'machines']
 
 
+class AssignmentAttachmentInline(StackedInline):
+    model = AssignmentAttachment
+    extra = 0
+
 @admin.register(Assignment)
 class AssignmentAdmin(ModelAdmin):
     list_display = ('id', 'title', 'description', 'created_by', 'assigned_to', 'deadline', 'status')
     list_display_links = ('id', 'title', 'description', 'created_by', 'assigned_to', 'deadline', 'status')
+    inlines = [AssignmentAttachmentInline]

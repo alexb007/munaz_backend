@@ -39,7 +39,7 @@ from .models import (
     IssueAction,
     ReviewComment,
     Neighborhood,
-    GovermentProgram, IssueLevel, Assignment,
+    GovermentProgram, IssueLevel, Assignment, UserRole,
 )
 from .permissions import IsInspectorOrDeveloper
 from .serializers import (
@@ -70,7 +70,7 @@ from .serializers import (
     IssueActionSerializer,
     ReviewCommentSerializer,
     NeighborhoodSerializer,
-    GovernmentProgramSerializer, AssignmentSerializer,
+    GovernmentProgramSerializer, AssignmentSerializer, CreateAssignmentSerializer,
 )
 from .utils import unblock_user, get_user_login_stats, haversine_distance
 
@@ -95,6 +95,10 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
 
     def custom_queryset(self) -> QuerySet:
         queryset = self.queryset
+        if self.request.user.role == UserRole.PROKURATURA:
+            queryset = queryset.filter(
+                attached_person__user=self.request.user
+            )
         month = datetime.now().month
         queryset = queryset.annotate(
             financed=Coalesce(
@@ -496,7 +500,8 @@ class ConstructionProgressViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
 
 class AssignmentViewSet(AutoRelatedMixin, ReadWriteSerializerMixin, viewsets.ModelViewSet):
     queryset = Assignment.objects.all()
-    serializer_class = AssignmentSerializer
+    read_serializer_class = AssignmentSerializer
+    write_serializer_class = CreateAssignmentSerializer
     filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
     fieldset_fields = ("object", "deadline")
 

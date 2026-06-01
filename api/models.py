@@ -41,20 +41,18 @@ class Neighborhood(models.Model):
         verbose_name_plural = 'Mahallalar'
         ordering = ['name']
 
+class UserRole(models.TextChoices):
+    WORKER = 'worker', 'Worker'
+    SUPERVISOR = 'supervisor', 'Inspektor'
+    ADMIN = 'admin', 'Admin'
+    OWNER = 'owner', 'Buyurtmachi'
+    DEVELOPER = 'developer', 'Loyihachi'
+    BUILDER = 'builder', 'Quruvchi'
+    PROKURATURA = 'prokuratura', 'Prokuratura'
+    CONTROL = 'control', 'Nazorat'
 
 class User(AbstractUser):
-    ROLES = (
-        ('worker', 'Worker'),
-        ('supervisor', 'Inspektor'),
-        ('admin', 'Admin'),
-        ('owner', 'Buyurtmachi'),
-        ('developer', 'Loyihachi'),
-        ('builder', 'Quruvchi'),
-        ('prokuratura', 'Prokuratura'),
-        ('control', 'Nazorat'),
-    )
-
-    role = models.CharField(max_length=20, choices=ROLES, default='worker')
+    role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.SUPERVISOR)
     phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
@@ -588,3 +586,14 @@ class Assignment(models.Model):
         verbose_name_plural = _('Murojaatlar')
         ordering = ('-deadline', 'created_at')
 
+class AssignmentAttachment(models.Model):
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    file = models.FileField(upload_to='assignments/')
+
+    def __str__(self):
+        return self.file.name
+
+    class Meta:
+        verbose_name = _('Murojaat fayli')
+        verbose_name_plural = _('Murojaat fayllari')
+        ordering = ('assignment', )

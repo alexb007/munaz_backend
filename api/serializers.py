@@ -4,7 +4,7 @@ from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssu
     ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
-    GovermentProgram, Assignment
+    GovermentProgram, Assignment, AssignmentAttachment
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -297,10 +297,25 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CreateAssignmentSerializer(serializers.ModelSerializer):
+    attachments = serializers.ListField(
+        child=serializers.FileField(), write_only=True, required=False
+    )
+
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    def create(self, validated_data):
+        print('asdasd')
+        files = validated_data.pop("attachments", [])
+        print(validated_data)
+
+        instance = super().create(validated_data)
+        for f in files:
+            AssignmentAttachment.objects.create(assignment=instance, file=f)
+        return instance
 
     def to_representation(self, instance):
         context = super().to_representation(instance)
-        context = ConstructionObjectListSerializer(instance.object, context=self.request['context']).data if instance.object else None
+        context['object'] = ConstructionObjectListSerializer(instance.object, context=self.context).data if instance.object else None
         return context
 
     class Meta:
@@ -327,3 +342,4 @@ class IssueSerializer(serializers.ModelSerializer):
         model = Issue
         fields = '__all__'
         read_only_fields = ['created_by', 'created_at', 'updated_at']
+
