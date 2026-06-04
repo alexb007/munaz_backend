@@ -3,7 +3,7 @@ from datetime import datetime
 from functools import reduce
 
 from django.db.models import Count, Sum, Avg, Min, Max, Q, DecimalField, F
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, NullIf
 
 from api.models import *
 from api.pagination import MainPagination
@@ -55,6 +55,7 @@ def _operationsCombine(obj: list, op = None):
     oper = operator.and_
     if op == 'div':
         oper = operator.truediv
+        operations = list(map(lambda x: NullIf(x, 0), operations))
 
     return reduce(oper, operations)
 
