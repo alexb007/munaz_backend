@@ -22,6 +22,8 @@ from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationFo
 
 from .forms import ConstructionObjectForm, GenerateUsersForm
 from .models import *
+from .resources import LoginAttemptsResource
+
 
 class UserResource(resources.ModelResource):
     class Meta:
@@ -128,6 +130,7 @@ class LoginAttemptAdmin(ModelAdmin, ImportExportModelAdmin):
     list_filter = ['successful', 'timestamp', 'user', ]
     search_fields = ['user__username', 'ip_address']
     readonly_fields = ['user', 'ip_address', 'user_agent', 'timestamp', 'successful']
+    resource_classes = [LoginAttemptsResource]
 
     def has_add_permission(self, request):
         return False
