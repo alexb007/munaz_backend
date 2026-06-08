@@ -490,7 +490,6 @@ class ConstructionFinancingViewSet(
     filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
     fieldset_fields = ("construction", "person")
 
-
 class ConstructionProgressViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
     queryset = ConstructionDailyProgress.objects.all()
     serializer_class = ConstructionDailyProgressSerializer

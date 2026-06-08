@@ -172,6 +172,7 @@ class ConstructionObjectStatus(models.IntegerChoices):
     FINISHED = 4, _('Foydalanishga topshirilgan')
     POSTPONED = 5, _("To'xtatilgan")
     NOT_FINANCED = 6, _("Moliyalashtirish to'xtatilgan")
+    TESTING = 7, _("Tekshirilmoqda")
 
 class ConstructionObject(models.Model):
     realtime = True
