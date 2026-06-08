@@ -123,9 +123,9 @@ admin.site.unregister(Group)
 
 
 @admin.register(LoginAttempt)
-class LoginAttemptAdmin(admin.ModelAdmin):
+class LoginAttemptAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ['user', 'ip_address', 'timestamp', 'successful']
-    list_filter = ['successful', 'timestamp']
+    list_filter = ['successful', 'timestamp', 'user', ]
     search_fields = ['user__username', 'ip_address']
     readonly_fields = ['user', 'ip_address', 'user_agent', 'timestamp', 'successful']
 
