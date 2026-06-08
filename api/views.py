@@ -97,7 +97,7 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
         queryset = self.queryset
         if self.request.user.role == UserRole.PROKURATURA:
             queryset = queryset.filter(
-                attached_person__user=self.request.user
+                attached_person__profile=self.request.user
             )
         month = datetime.now().month
         queryset = queryset.annotate(
