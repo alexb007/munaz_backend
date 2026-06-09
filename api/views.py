@@ -70,7 +70,7 @@ from .serializers import (
     IssueActionSerializer,
     ReviewCommentSerializer,
     NeighborhoodSerializer,
-    GovernmentProgramSerializer, AssignmentSerializer, CreateAssignmentSerializer,
+    GovernmentProgramSerializer, AssignmentSerializer, CreateAssignmentSerializer, CreateIssueSerializer,
 )
 from .utils import unblock_user, get_user_login_stats, haversine_distance
 
@@ -331,7 +331,7 @@ class ReportPhotoCreateView(generics.CreateAPIView):
 
 class IssueCreateView(generics.CreateAPIView):
     queryset = Issue.objects.all()
-    serializer_class = IssueSerializer
+    serializer_class = CreateIssueSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):

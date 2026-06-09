@@ -331,6 +331,20 @@ class AssignmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CreateIssueSerializer(serializers.ModelSerializer):
+    photos = IssuePhotoSerializer(many=True, read_only=True)
+    review = ReviewListSerializer(read_only=True)
+
+    class Meta:
+        model = Issue
+        fields = '__all__'
+        read_only_fields = ['created_by', 'created_at', 'updated_at']
+
+    def to_representation(self, instance):
+        context = self.to_representation(instance)
+        context['issue_type'] = IssueTypeSerializer(instance.issue_type).data
+        return context
+
 class IssueSerializer(serializers.ModelSerializer):
     photos = IssuePhotoSerializer(many=True, read_only=True)
     issue_type = IssueTypeSerializer(read_only=True)
