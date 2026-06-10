@@ -170,7 +170,8 @@ class CreateIssueSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         context = super().to_representation(instance)
-        context['issue_type'] = IssueTypeSerializer(instance.issue_type).data
+        context['issue_type'] = IssueTypeSerializer(instance.issue_type).data if instance.issue_type else None
+        context['object'] = ConstructionObjectSerializer(instance.object).data if instance.object else None
         return context
 
 
