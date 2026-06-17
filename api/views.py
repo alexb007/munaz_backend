@@ -39,7 +39,7 @@ from .models import (
     IssueAction,
     ReviewComment,
     Neighborhood,
-    GovermentProgram, IssueLevel, Assignment, UserRole,
+    GovermentProgram, IssueLevel, Assignment, UserRole, User,
 )
 from .permissions import IsInspectorOrDeveloper
 from .serializers import (
@@ -74,7 +74,6 @@ from .serializers import (
 )
 from .utils import unblock_user, get_user_login_stats, haversine_distance
 
-User = get_user_model()
 
 
 class ProfileView(APIView):
@@ -92,6 +91,15 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
     filterset_class = ConstructionObjectFilter
     queryset = ConstructionObject.objects.all()
     search_fields = ("name",)
+    ordering_fields = (
+        "id", "name", "neighborhood", "address",
+        "category", "p_reviews_p_m", "i_reviews_p_m", "t_reviews_p_m",
+        "deadline", "radius", "building_count", "budget", "contract_amount",
+        "workers", "machines", "created_at", "updated_at", "owner",
+        "developer", "attached_person", "is_government", "program",
+        "status", "financed", "financed_p", "completed", "completed_p",
+        "p_reviews", "i_reviews", "t_reviews",
+    )
 
     def custom_queryset(self) -> QuerySet:
         queryset = self.queryset
