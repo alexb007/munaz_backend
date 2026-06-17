@@ -95,10 +95,9 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
 
     def custom_queryset(self) -> QuerySet:
         queryset = self.queryset
+        filters_map = {}
         if self.request.user.role == UserRole.PROKURATURA:
-            queryset = queryset.filter(
-                attached_person__profile=self.request.user
-            )
+            filters_map['attached_person__profile']=self.request.user
         month = datetime.now().month
         queryset = queryset.annotate(
             financed=Coalesce(
@@ -114,7 +113,7 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
                 output_field=DecimalField(default=0),
             ),
             completed_p=Coalesce(
-                F("completed") / NullIf(F('financed'), 0) * 100, 0, output_field=DecimalField(default=0)
+                F("completed") / NullIf(F('financed'), 0.0) * 100, 0, output_field=DecimalField(default=0)
             ),
             p_reviews=Coalesce(
                 Count("review", filter=Q(review__inspection_types=1, review__status='completed', review__planned_date__month=month)), 0,
@@ -128,7 +127,7 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
                 Count("review", filter=Q(review__inspection_types=3) & Q(review__status='completed')), 0,
                 output_field=DecimalField(default=0)
             )
-        )
+        ).filter(**filters_map)
         return queryset
 
     def get_serializer_class(self):
