@@ -193,4 +193,5 @@ class ConstructionObjectFilter(django_filters.FilterSet):
         model = ConstructionObject
         fields = {
             'deadline': ['range', 'gte', 'lte', 'exact'],
+            'neighborhood__district': ['exact', 'in']
         }

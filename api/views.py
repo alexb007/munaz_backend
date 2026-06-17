@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, DecimalField, FloatField, Sum, Count, QuerySet
 from django.db.models.functions import Coalesce, NullIf
-from django_filters import OrderingFilter
 
 from api.filters import ConstructionObjectFilter, UniversalDRFFilterBackend
 from api.mixins import AutoRelatedMixin, ReadWriteSerializerMixin
@@ -104,7 +103,7 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
     def custom_queryset(self) -> QuerySet:
         queryset = self.queryset
         filters_map = {}
-        if self.request.user.role == UserRole.PROKURATURA:
+        if hasattr(self.request.user, 'role') and self.request.user.role == UserRole.PROKURATURA:
             filters_map['attached_person__profile']=self.request.user
         month = datetime.now().month
         queryset = queryset.annotate(

@@ -4,7 +4,7 @@ from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssu
     ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
-    GovermentProgram, Assignment, AssignmentAttachment
+    GovermentProgram, Assignment, AssignmentAttachment, Region, District
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -25,6 +25,17 @@ class IssueTypeSerializer(serializers.ModelSerializer):
         model = IssueType
         fields = '__all__'
 
+
+class RegionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Region
+        fields = '__all__'
+
+
+class DistrictSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = District
+        fields = '__all__'
 
 class NeighborhoodSerializer(serializers.ModelSerializer):
     class Meta:
@@ -95,6 +106,7 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
     financed = serializers.FloatField(default=0, read_only=True)
     completed = serializers.FloatField(default=0, read_only=True)
     p_reviews = serializers.FloatField(default=0, read_only=True)
+    neighborhood__district = RegionSerializer(read_only=True)
 
     class Meta:
         model = ConstructionObject
