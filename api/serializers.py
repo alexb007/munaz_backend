@@ -62,7 +62,7 @@ class DistrictSerializer(serializers.ModelSerializer):
             financed=Sum("constructionfinancing__amount"),
             financed_p=Coalesce(NullIf(F('financed'), 0.0) / NullIf(F('contract_amount'), 0.0), 0,
                                 output_field=DecimalField()),
-        ).filter(financed_p__lte=0.15).aggregate(total=Sum('building_count'))['total']
+        ).filter(neighborhood__district=obj, financed_p__lte=0.15).aggregate(total=Sum('building_count'))['total']
 
     def get_not_spending(self, obj):
         return ConstructionObject.objects.annotate(
@@ -70,7 +70,7 @@ class DistrictSerializer(serializers.ModelSerializer):
             completed=Sum("constructiondailyprogress__amount"),
             completed_p=Coalesce(NullIf(F('completed'), 0.0) / NullIf(F('financed'), 0.0), 0,
                                  output_field=DecimalField()),
-        ).filter(completed_p__lte=0.1).aggregate(total=Sum('building_count'))['total']
+        ).filter(neighborhood__district=obj, completed_p__lte=0.1).aggregate(total=Sum('building_count'))['total']
 
     def get_not_updating(self, obj):
         return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))[
