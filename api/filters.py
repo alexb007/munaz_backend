@@ -187,6 +187,9 @@ class ConstructionObjectFilter(django_filters.FilterSet):
     financed = django_filters.NumberFilter(field_name='financed', lookup_expr='exact')
     financed__gte = django_filters.NumberFilter(field_name='financed', lookup_expr='gte')
     financed__lte = django_filters.NumberFilter(field_name='financed', lookup_expr='lte')
+    last_update = django_filters.DateFilter(field_name='last_update', lookup_expr='exact')
+    last_update__gte = django_filters.DateFilter(field_name='last_update', lookup_expr='gte')
+    last_update__lte = django_filters.DateFilter(field_name='last_update', lookup_expr='lte')
 
 
     class Meta:

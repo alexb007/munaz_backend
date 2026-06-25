@@ -98,7 +98,7 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
         "workers", "machines", "created_at", "updated_at", "owner",
         "developer", "attached_person", "is_government", "program",
         "status", "financed", "financed_p", "completed", "completed_p",
-        "p_reviews", "i_reviews", "t_reviews",
+        "last_update", "p_reviews", "i_reviews", "t_reviews",
     )
 
     def custom_queryset(self) -> QuerySet:

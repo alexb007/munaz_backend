@@ -39,12 +39,6 @@ class RegionSerializer(serializers.ModelSerializer):
 
 
 class DistrictSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = District
-        fields = '__all__'
-
-
-class DistrictSerializer(serializers.ModelSerializer):
     objects = serializers.SerializerMethodField()
     inprogress = serializers.SerializerMethodField()
     not_financed = serializers.SerializerMethodField()
@@ -381,9 +375,7 @@ class CreateAssignmentSerializer(serializers.ModelSerializer):
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     def create(self, validated_data):
-        print('asdasd')
         files = validated_data.pop("attachments", [])
-        print(validated_data)
 
         instance = super().create(validated_data)
         for f in files:
