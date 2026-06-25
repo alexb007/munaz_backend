@@ -1,5 +1,8 @@
-from django.db.models import Sum, F, DecimalField
+from datetime import timedelta, datetime, date
+
+from django.db.models import Sum, F, DecimalField, Max
 from django.db.models.functions import Coalesce, NullIf
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, \
@@ -50,19 +53,23 @@ class DistrictSerializer(serializers.ModelSerializer):
 
     def get_objects(self, obj):
         return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))[
-            'total']
+            'total'] or 0.0
 
     def get_inprogress(self, obj):
-        return \
-        ConstructionObject.objects.filter(neighborhood__district=obj).exclude(status__in=[3, 4, 5, 6, 7]).aggregate(
-            total=Sum('building_count'))['total']
+        return ConstructionObject.objects.filter(neighborhood__district=obj).exclude(status__in=[3, 4, 5, 6, 7]).aggregate(
+            total=Sum('building_count'))['total'] or 0.0
 
     def get_not_financed(self, obj):
         return ConstructionObject.objects.annotate(
             financed=Sum("constructionfinancing__amount"),
             financed_p=Coalesce(NullIf(F('financed'), 0.0) / NullIf(F('contract_amount'), 0.0), 0,
                                 output_field=DecimalField()),
-        ).filter(neighborhood__district=obj, financed_p__lte=0.15).aggregate(total=Sum('building_count'))['total']
+        ).filter(
+            neighborhood__district=obj,
+            financed_p__lte=0.15
+        ).aggregate(
+            total=Sum('building_count')
+        )['total'] or 0.0
 
     def get_not_spending(self, obj):
         return ConstructionObject.objects.annotate(
@@ -70,11 +77,17 @@ class DistrictSerializer(serializers.ModelSerializer):
             completed=Sum("constructiondailyprogress__amount"),
             completed_p=Coalesce(NullIf(F('completed'), 0.0) / NullIf(F('financed'), 0.0), 0,
                                  output_field=DecimalField()),
-        ).filter(neighborhood__district=obj, completed_p__lte=0.1).aggregate(total=Sum('building_count'))['total']
+        ).filter(neighborhood__district=obj, completed_p__lte=0.1).aggregate(total=Sum('building_count'))['total'] or 0.0
 
     def get_not_updating(self, obj):
-        return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))[
-            'total']
+        return ConstructionObject.objects.annotate(
+            last_updated=Coalesce(Max('constructiondailyprogress__date'), date(2026, 6, 1),)
+        ).filter(
+            last_updated__lte=timezone.now() - timedelta(days=7),
+            neighborhood__district=obj
+        ).aggregate(
+            total=Sum('building_count')
+        )['total'] or 0.0
 
     class Meta:
         model = District
