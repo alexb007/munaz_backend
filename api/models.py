@@ -19,6 +19,7 @@ class Region(models.Model):
 class District(models.Model):
     name = models.CharField(max_length=255)
     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True)
+    personal = models.ManyToManyField("api.Person", verbose_name=_('Hodimlar'))
 
     def __str__(self):
         return self.name
