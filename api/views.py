@@ -135,7 +135,7 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
                 output_field=DecimalField(default=0)
             ),
             last_update=Coalesce(
-                Max("contructiondailyprogress__date"),
+                Max("constructiondailyprogress__date"),
                 date(2026, 6, 1),
             ),
         ).filter(**filters_map)
