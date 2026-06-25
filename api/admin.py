@@ -291,7 +291,9 @@ class DistrictAdmin(ModelAdmin):
 
 @admin.register(Neighborhood)
 class NeighborhoodAdmin(ModelAdmin):
-    pass
+    list_display = ['id', 'name', 'district']
+    list_filter = ('district',)
+    list_editable = ('district',)
 
 
 class PublicIssuePhotosInline(StackedInline):
