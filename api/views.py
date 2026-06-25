@@ -38,7 +38,7 @@ from .models import (
     IssueAction,
     ReviewComment,
     Neighborhood,
-    GovermentProgram, IssueLevel, Assignment, UserRole, User,
+    GovermentProgram, IssueLevel, Assignment, UserRole, User, District,
 )
 from .permissions import IsInspectorOrDeveloper
 from .serializers import (
@@ -70,6 +70,7 @@ from .serializers import (
     ReviewCommentSerializer,
     NeighborhoodSerializer,
     GovernmentProgramSerializer, AssignmentSerializer, CreateAssignmentSerializer, CreateIssueSerializer,
+    DistrictSerializer,
 )
 from .utils import unblock_user, get_user_login_stats, haversine_distance
 
@@ -473,6 +474,13 @@ class NeighborhoodViewSet(viewsets.ModelViewSet):
     serializer_class = NeighborhoodSerializer
     filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
     filterset_fields = ("district",)
+
+
+class DistrictViewSet(viewsets.ModelViewSet):
+    queryset = District.objects.all()
+    serializer_class = DistrictSerializer
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filterset_fields = ("region",)
 
 
 class GovernmentProgramViewSet(viewsets.ModelViewSet):

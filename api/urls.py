@@ -12,11 +12,12 @@ from .views import (
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
     ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView,
     ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet, NeighborhoodViewSet,
-    GovernmentProgramViewSet, PublicIssueViewSet, CalendarViewSet, report_issue, AssignmentViewSet
+    GovernmentProgramViewSet, PublicIssueViewSet, CalendarViewSet, report_issue, AssignmentViewSet, DistrictViewSet
 )
 
 router = DefaultRouter()
 router.register('objects', ConstructionsView, 'projects')
+router.register('districts', DistrictViewSet, 'districts')
 router.register('documents', ConstructionObjectDocumentsView, 'documents')
 router.register('document-types', ConstructionDocumentTypeView, 'document-types')
 router.register('inspections', InspectionsView, 'inspections')

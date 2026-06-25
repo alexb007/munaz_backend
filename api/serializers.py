@@ -1,3 +1,5 @@
+from django.db.models import Sum, F, DecimalField
+from django.db.models.functions import Coalesce
 from rest_framework import serializers
 
 from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, \
@@ -33,6 +35,39 @@ class RegionSerializer(serializers.ModelSerializer):
 
 
 class DistrictSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = District
+        fields = '__all__'
+
+class DistrictSerializer(serializers.ModelSerializer):
+    objects = serializers.SerializerMethodField()
+    inprogress = serializers.SerializerMethodField()
+    not_financed = serializers.SerializerMethodField()
+    not_spending = serializers.SerializerMethodField()
+    not_updating = serializers.SerializerMethodField()
+
+    def get_objects(self, obj):
+        return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))['total']
+
+    def get_inprogress(self, obj):
+        return ConstructionObject.objects.filter(neighborhood__district=obj).exclude(status__in=[3, 4, 5, 6, 7]).aggregate(total=Sum('building_count'))['total']
+
+    def get_not_financed(self, obj):
+        return ConstructionObject.objects.annotate(
+            financed=Sum("constructionfinancing__amount"),
+            financed_p=Coalesce(F('financed') / F('contract_amount'), 0, output_field=DecimalField()),
+        ).filter(financed_p__lte=0.15).aggregate(total=Sum('building_count'))['total']
+
+    def get_not_spending(self, obj):
+        return ConstructionObject.objects.annotate(
+            financed=Sum("constructionfinancing__amount"),
+            completed=Sum("constructiondailyprogress__amount"),
+            completed_p=Coalesce(F('completed') / F('financed'), 0, output_field=DecimalField()),
+        ).filter(completed_p__lte=0.1).aggregate(total=Sum('building_count'))['total']
+
+    def get_not_updating(self, obj):
+        return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))['total']
+
     class Meta:
         model = District
         fields = '__all__'
