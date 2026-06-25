@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q, F, DecimalField, FloatField, Sum, Count, QuerySet
+from django.db.models import Q, F, DecimalField, FloatField, Sum, Count, QuerySet, Max
 from django.db.models.functions import Coalesce, NullIf
 
 from api.filters import ConstructionObjectFilter, UniversalDRFFilterBackend
@@ -114,7 +114,6 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
             financed_p=Coalesce(
                 F("financed") / F('budget') * 100, 0, output_field=DecimalField(default=0)
             ),
-
             completed=Coalesce(
                 Sum("constructiondailyprogress__amount"),
                 0,
@@ -134,7 +133,11 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
             t_reviews=Coalesce(
                 Count("review", filter=Q(review__inspection_types=3) & Q(review__status='completed')), 0,
                 output_field=DecimalField(default=0)
-            )
+            ),
+            last_update=Coalesce(
+                Max("contructiondailyprogress__date"),
+                date(2026, 6, 1),
+            ),
         ).filter(**filters_map)
         return queryset
 

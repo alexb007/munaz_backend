@@ -364,6 +364,7 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
     p_reviews = serializers.FloatField(default=0)
     i_reviews = serializers.FloatField(default=0)
     t_reviews = serializers.FloatField(default=0)
+    last_update = serializers.DateField(read_only=True)
     neighborhood = NeighborhoodSerializer(read_only=True)
     program = GovernmentProgramSerializer(read_only=True)
 
