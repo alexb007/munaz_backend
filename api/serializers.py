@@ -1,5 +1,5 @@
 from django.db.models import Sum, F, DecimalField
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, NullIf
 from rest_framework import serializers
 
 from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssue, PublicIssuePhoto, User, \
@@ -13,6 +13,7 @@ class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
         fields = '__all__'
+
 
 class UserSerializer(serializers.ModelSerializer):
     person = PersonSerializer(read_only=True)
@@ -39,6 +40,7 @@ class DistrictSerializer(serializers.ModelSerializer):
         model = District
         fields = '__all__'
 
+
 class DistrictSerializer(serializers.ModelSerializer):
     objects = serializers.SerializerMethodField()
     inprogress = serializers.SerializerMethodField()
@@ -47,30 +49,37 @@ class DistrictSerializer(serializers.ModelSerializer):
     not_updating = serializers.SerializerMethodField()
 
     def get_objects(self, obj):
-        return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))['total']
+        return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))[
+            'total']
 
     def get_inprogress(self, obj):
-        return ConstructionObject.objects.filter(neighborhood__district=obj).exclude(status__in=[3, 4, 5, 6, 7]).aggregate(total=Sum('building_count'))['total']
+        return \
+        ConstructionObject.objects.filter(neighborhood__district=obj).exclude(status__in=[3, 4, 5, 6, 7]).aggregate(
+            total=Sum('building_count'))['total']
 
     def get_not_financed(self, obj):
         return ConstructionObject.objects.annotate(
             financed=Sum("constructionfinancing__amount"),
-            financed_p=Coalesce(F('financed') / F('contract_amount'), 0, output_field=DecimalField()),
+            financed_p=Coalesce(NullIf(F('financed'), 0.0) / NullIf(F('contract_amount'), 0.0), 0,
+                                output_field=DecimalField()),
         ).filter(financed_p__lte=0.15).aggregate(total=Sum('building_count'))['total']
 
     def get_not_spending(self, obj):
         return ConstructionObject.objects.annotate(
             financed=Sum("constructionfinancing__amount"),
             completed=Sum("constructiondailyprogress__amount"),
-            completed_p=Coalesce(F('completed') / F('financed'), 0, output_field=DecimalField()),
+            completed_p=Coalesce(NullIf(F('completed'), 0.0) / NullIf(F('financed'), 0.0), 0,
+                                 output_field=DecimalField()),
         ).filter(completed_p__lte=0.1).aggregate(total=Sum('building_count'))['total']
 
     def get_not_updating(self, obj):
-        return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))['total']
+        return ConstructionObject.objects.filter(neighborhood__district=obj).aggregate(total=Sum('building_count'))[
+            'total']
 
     class Meta:
         model = District
         fields = '__all__'
+
 
 class NeighborhoodSerializer(serializers.ModelSerializer):
     class Meta:
@@ -100,14 +109,10 @@ class ConstructionDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-
-
 class ProjectOwnerCompanySerializer(serializers.ModelSerializer):
     personal = PersonSerializer(many=True, read_only=True)
     director = PersonSerializer(read_only=True)
     contact_person = PersonSerializer(read_only=True)
-
 
     class Meta:
         model = ProjectOwnerCompany
@@ -145,13 +150,14 @@ class ConstructionObjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConstructionObject
-        fields = '__all__'#[f.name for f in ConstructionObject._meta.fields] + ['construction_companies', 'project_companies', 'owner_companies', 'financed']
+        fields = '__all__'  # [f.name for f in ConstructionObject._meta.fields] + ['construction_companies', 'project_companies', 'owner_companies', 'financed']
 
 
 class InspectionTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = InspectionType
         fields = '__all__'
+
 
 class ReportPhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -169,11 +175,12 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['created_by', 'created_at']
 
+
 class ReviewListSerializer(serializers.ModelSerializer):
     assigned_to = UserSerializer(read_only=True)
     latitude = serializers.FloatField(read_only=True)
     longitude = serializers.FloatField(read_only=True)
-    inspection_types = InspectionTypeSerializer( many=True)
+    inspection_types = InspectionTypeSerializer(many=True)
     reports = ReportSerializer(many=True)
 
     class Meta:
@@ -192,11 +199,6 @@ class ReviewSerializer(BaseReviewSerializer):
     assigned_to = UserSerializer(read_only=True)
     latitude = serializers.FloatField(read_only=True)
     longitude = serializers.FloatField(read_only=True)
-
-
-
-
-
 
 
 class IssuePhotoSerializer(serializers.ModelSerializer):
@@ -251,6 +253,7 @@ class GovernmentProgramSerializer(serializers.ModelSerializer):
         model = GovermentProgram
         fields = '__all__'
 
+
 class CreatePublicIssueSerializer(serializers.ModelSerializer):
     class Meta:
         model = PublicIssue
@@ -265,6 +268,7 @@ class PublicIssuePhotoSerializer(serializers.ModelSerializer):
 
 class PublicIssueSerializer(serializers.ModelSerializer):
     photos = PublicIssuePhotoSerializer(read_only=True, many=True)
+
     class Meta:
         model = PublicIssue
         fields = '__all__'
@@ -275,6 +279,7 @@ class CreateConstructionFinancingSerializer(serializers.ModelSerializer):
         model = ConstructionFinancing
         fields = '__all__'
 
+
 class ConstructionFinancingSerializer(serializers.ModelSerializer):
     construction = ConstructionObjectSerializer(read_only=True)
     person = PersonSerializer(read_only=True)
@@ -282,6 +287,7 @@ class ConstructionFinancingSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConstructionFinancing
         fields = '__all__'
+
 
 class ConstructionDailyProgressSerializer(serializers.ModelSerializer):
     realtime = True
@@ -299,7 +305,7 @@ class AggregationSerializer(serializers.Serializer):
     )
     field = serializers.CharField(required=False)
     group_by = serializers.CharField(required=False)
-    
+
 
 class ReportBlockSerializer(serializers.Serializer):
     id = serializers.CharField()
@@ -307,7 +313,7 @@ class ReportBlockSerializer(serializers.Serializer):
         choices=["row", "kpi", "table", "lineChart", "barChart", "pieChart"]
     )
     children = serializers.ListField(
-        child=serializers.DictField(), # Or another CategorySerializer instance
+        child=serializers.DictField(),  # Or another CategorySerializer instance
         required=False
     )
     entity = serializers.CharField(required=False)
@@ -324,12 +330,13 @@ class ReportBlockSerializer(serializers.Serializer):
     class Meta:
         fields = ["id", "type", "children", "entity", "fields", "aggregation", "pagination"]
 
+
 class ReportQuerySerializer(serializers.Serializer):
     report_id = serializers.CharField()
     filters = serializers.DictField(required=False)
     annotations = serializers.DictField(required=False)
     period = serializers.DictField(required=False)
-    period_by = serializers.CharField(default='created_at',required=False)
+    period_by = serializers.CharField(default='created_at', required=False)
     blocks = ReportBlockSerializer(many=True)
 
 
@@ -351,6 +358,7 @@ class ConstructionObjectListSerializer(serializers.ModelSerializer):
         model = ConstructionObject
         fields = '__all__'
 
+
 class CreateAssignmentSerializer(serializers.ModelSerializer):
     attachments = serializers.ListField(
         child=serializers.FileField(), write_only=True, required=False
@@ -370,20 +378,22 @@ class CreateAssignmentSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         context = super().to_representation(instance)
-        context['object'] = ConstructionObjectListSerializer(instance.object, context=self.context).data if instance.object else None
+        context['object'] = ConstructionObjectListSerializer(instance.object,
+                                                             context=self.context).data if instance.object else None
         return context
 
     class Meta:
         model = Assignment
         fields = '__all__'
 
-class AssignmentSerializer(serializers.ModelSerializer):
 
+class AssignmentSerializer(serializers.ModelSerializer):
     object = ConstructionObjectListSerializer(read_only=True)
 
     class Meta:
         model = Assignment
         fields = '__all__'
+
 
 class IssueSerializer(serializers.ModelSerializer):
     photos = IssuePhotoSerializer(many=True, read_only=True)
@@ -396,4 +406,3 @@ class IssueSerializer(serializers.ModelSerializer):
         model = Issue
         fields = '__all__'
         read_only_fields = ['created_by', 'created_at', 'updated_at']
-
