@@ -286,7 +286,7 @@ class RegionAdmin(ModelAdmin):
 
 @admin.register(District)
 class DistrictAdmin(ModelAdmin):
-    pass
+    autocomplete_fields = ["personal"]
 
 
 @admin.register(Neighborhood)
