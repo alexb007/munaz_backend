@@ -479,7 +479,7 @@ class NeighborhoodViewSet(viewsets.ModelViewSet):
 class DistrictViewSet(viewsets.ModelViewSet):
     queryset = District.objects.all()
     serializer_class = DistrictSerializer
-    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
+    filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_fields = ("region",)
 
 
