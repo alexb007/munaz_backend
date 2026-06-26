@@ -106,11 +106,12 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
         if hasattr(self.request.user, 'role') and self.request.user.role == UserRole.PROKURATURA:
             filters_map['neighborhood__district__in'] = self.request.user.person.district_set.all()
         elif hasattr(self.request.user, 'role') and self.request.user.role == UserRole.BUILDER:
-            filters_map['construction_companies'] = self.request.user.person.constructioncompany_set.all()
+            filters_map['construction_companies__in'] = self.request.user.person.constructioncompany_set.all()
         elif hasattr(self.request.user, 'role') and self.request.user.role == UserRole.DEVELOPER:
-            filters_map['project_companies'] = self.request.user.person.projectdevelopercompany_set.all()
+            filters_map['project_companies__in'] = self.request.user.person.projectdevelopercompany_set.all()
         elif hasattr(self.request.user, 'role') and self.request.user.role == UserRole.OWNER:
-            filters_map['owner_companies'] = self.request.user.person.projectownercompany_set.all()
+            filters_map['owner_companies__in'] = self.request.user.person.projectownercompany_set.all()
+        print(filters_map)
         month = datetime.now().month
         queryset = queryset.annotate(
             financed=Coalesce(
