@@ -101,8 +101,8 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
         "last_update", "p_reviews", "i_reviews", "t_reviews",
     )
 
-    def custom_queryset(self) -> QuerySet:
-        queryset = self.queryset
+    def get_queryset(self) -> QuerySet:
+        queryset = super().get_queryset()
         filters_map = {}
         if hasattr(self.request.user, 'role') and self.request.user.role == UserRole.PROKURATURA:
             filters_map['attached_person__profile']=self.request.user
