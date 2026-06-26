@@ -75,7 +75,6 @@ from .serializers import (
 from .utils import unblock_user, get_user_login_stats, haversine_distance
 
 
-
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -105,7 +104,13 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
         queryset = super().get_queryset()
         filters_map = {}
         if hasattr(self.request.user, 'role') and self.request.user.role == UserRole.PROKURATURA:
-            filters_map['attached_person__profile']=self.request.user
+            filters_map['neighborhood__district__in'] = self.request.user.person.district_set.all()
+        elif hasattr(self.request.user, 'role') and self.request.user.role == UserRole.BUILDER:
+            filters_map['construction_companies'] = self.request.user.person.constructioncompany_set.all()
+        elif hasattr(self.request.user, 'role') and self.request.user.role == UserRole.DEVELOPER:
+            filters_map['project_companies'] = self.request.user.person.projectdevelopercompany_set.all()
+        elif hasattr(self.request.user, 'role') and self.request.user.role == UserRole.OWNER:
+            filters_map['owner_companies'] = self.request.user.person.projectownercompany_set.all()
         month = datetime.now().month
         queryset = queryset.annotate(
             financed=Coalesce(
@@ -123,7 +128,8 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
                 F("completed") / NullIf(F('financed'), 0.0) * 100, 0, output_field=DecimalField(default=0)
             ),
             p_reviews=Coalesce(
-                Count("review", filter=Q(review__inspection_types=1, review__status='completed', review__planned_date__month=month)), 0,
+                Count("review", filter=Q(review__inspection_types=1, review__status='completed',
+                                         review__planned_date__month=month)), 0,
                 output_field=DecimalField(default=0)
             ),
             i_reviews=Coalesce(
@@ -507,6 +513,7 @@ class ConstructionFinancingViewSet(
     filter_backends = (UniversalDRFFilterBackend, filters.SearchFilter)
     fieldset_fields = ("construction", "person")
 
+
 class ConstructionProgressViewSet(AutoRelatedMixin, viewsets.ModelViewSet):
     queryset = ConstructionDailyProgress.objects.all()
     serializer_class = ConstructionDailyProgressSerializer
@@ -603,7 +610,6 @@ class ReportQueryAPIView(APIView):
 
 
 class CalendarViewSet(viewsets.GenericViewSet):
-
     queryset = ConstructionObject.objects.all()
 
     @action(detail=False, methods=['get'])
@@ -614,7 +620,8 @@ class CalendarViewSet(viewsets.GenericViewSet):
 
         try:
             start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00')) if start_date else datetime.now()
-            end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00')) if end_date else start_date + timedelta(days=30)
+            end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00')) if end_date else start_date + timedelta(
+                days=30)
         except ValueError:
             return Response(
                 {'error': 'Invalid date format'},
@@ -701,6 +708,7 @@ class CalendarViewSet(viewsets.GenericViewSet):
             })
 
         return Response(events)
+
 
 # views.py
 @api_view(['POST'])
