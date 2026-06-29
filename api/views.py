@@ -111,7 +111,6 @@ class ConstructionsView(AutoRelatedMixin, viewsets.ModelViewSet):
             filters_map['project_companies__in'] = self.request.user.person.projectdevelopercompany_set.all()
         elif hasattr(self.request.user, 'role') and self.request.user.role == UserRole.OWNER:
             filters_map['owner_companies__in'] = self.request.user.person.projectownercompany_set.all()
-        print(filters_map)
         month = datetime.now().month
         queryset = queryset.annotate(
             financed=Coalesce(

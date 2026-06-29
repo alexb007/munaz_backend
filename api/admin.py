@@ -310,11 +310,22 @@ class PublicIssueAdmin(ModelAdmin):
 @admin.register(ConstructionFinancing)
 class ConstructionFinancingAdmin(ModelAdmin):
     list_display = ['id', 'construction', 'date', 'amount', 'person']
+    autocomplete_fields = ['construction']
+
+    def get_changeform_initial_data(self, request):
+        """Sets the logged-in auth user as the default form value."""
+        initial = super().get_changeform_initial_data(request)
+
+        # 'user_field' should match the name of the ForeignKey/Field in your Model
+        initial['person'] = request.user.person
+
+        return initial
 
 
 @admin.register(ConstructionDailyProgress)
-class ConsturctionDailyProgressAdmin(ModelAdmin):
+class ConstructionDailyProgressAdmin(ModelAdmin):
     list_display = ['id', 'construction', 'date', 'amount', 'workers', 'machines']
+    autocomplete_fields = ['construction']
 
 
 class AssignmentAttachmentInline(StackedInline):
