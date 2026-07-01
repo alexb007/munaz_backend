@@ -90,6 +90,7 @@ def _build_objects_summary_by_district():
         last_date = last_progress_dates.get(obj.id)
         if last_date is None:
             bucket['no_data'] += 1
+            bucket['stale'] += 1
         elif (today - last_date).days > 7:
             bucket['stale'] += 1
 
