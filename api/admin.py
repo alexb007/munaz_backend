@@ -39,12 +39,12 @@ from .resources import LoginAttemptsResource
 
 def _build_objects_summary_by_district():
     """
-    ConstructionObject larni Neighborhood -> District kesimida guruhlaydi va
-    quyidagi ko'rsatkichlarni hisoblaydi:
-      - jami obyektlar soni
-      - moliyalashtirish ko'rsatkichi past (< 15%) bo'lgan obyektlar soni
-      - so'nggi kunlik ma'lumot 7 kundan oshib ketgan obyektlar soni
-      - umuman kunlik ma'lumot kiritilmagan obyektlar soni
+    ConstructionObject larni District kesimida guruhlaydi va quyidagi
+    ko'rsatkichlarni hisoblaydi:
+      - jami obyektlar soni (Sum(ConstructionObject.building_count))
+      - moliyalashtirish ko'rsatkichi past (< 15%) bo'lgan loyihalar soni
+      - so'nggi kunlik ma'lumot 7 kundan oshib ketgan loyihalar soni
+      - umuman kunlik ma'lumot kiritilmagan loyihalar soni
     """
     today = timezone.now().date()
 
@@ -69,49 +69,55 @@ def _build_objects_summary_by_district():
 
         district_key = district.id if district else 0
         district_name = district.name if district else "Tuman biriktirilmagan"
-        neighborhood_key = neighborhood.id if neighborhood else 0
-        neighborhood_name = neighborhood.name if neighborhood else "Mahalla biriktirilmagan"
 
-        district_bucket = districts.setdefault(district_key, {
+        bucket = districts.setdefault(district_key, {
             'name': district_name,
-            'neighborhoods': OrderedDict(),
-        })
-        neighborhood_bucket = district_bucket['neighborhoods'].setdefault(neighborhood_key, {
-            'name': neighborhood_name,
-            'total': 0,
+            'total_buildings': 0,
             'low_financing': 0,
             'stale': 0,
             'no_data': 0,
         })
 
-        neighborhood_bucket['total'] += 1
+        bucket['total_buildings'] += obj.building_count or 0
 
         total_financed = financing_totals.get(obj.id) or 0
         budget = obj.budget or 0
         if budget > 0:
             ratio = (total_financed / budget) * 100
             if ratio < 15:
-                neighborhood_bucket['low_financing'] += 1
+                bucket['low_financing'] += 1
 
         last_date = last_progress_dates.get(obj.id)
         if last_date is None:
-            neighborhood_bucket['no_data'] += 1
+            bucket['no_data'] += 1
         elif (today - last_date).days > 7:
-            neighborhood_bucket['stale'] += 1
+            bucket['stale'] += 1
 
     return districts
 
 
 def _build_login_activity_by_district(days=30):
     """
-    Har bir District ga biriktirilgan obyektlarning attached_person
-    (Person.profile -> User) xodimlari uchun so'nggi `days` kunlik
-    tizimga kirishlar sonini kunlik kesimda hisoblaydi.
+    Har bir District bo'yicha, unga biriktirilgan obyektlarning attached_person
+    (Person.profile -> User) xodimlari kesimida so'nggi `days` kunlik tizimga
+    kirishlar sonini kunlik kesimda hisoblaydi.
+
+    Qaytadi:
+        date_list — kunlar ro'yxati
+        district_data — OrderedDict:
+            district_key -> {
+                'name': str,
+                'employees': [
+                    {'name': str, 'daily': [int, ...]}, ...
+                ],
+                'daily_total': [int, ...],   # tuman bo'yicha jami
+            }
     """
     today = timezone.now().date()
     start_date = today - datetime.timedelta(days=days - 1)
 
-    district_users = defaultdict(set)
+    # district_key -> {user_id: display_name}
+    district_employees = defaultdict(dict)
     district_names = {}
 
     objects = ConstructionObject.objects.select_related(
@@ -126,11 +132,14 @@ def _build_login_activity_by_district(days=30):
         district = neighborhood.district if neighborhood else None
         district_key = district.id if district else 0
         district_names[district_key] = district.name if district else "Tuman biriktirilmagan"
-        district_users[district_key].add(obj.attached_person.profile_id)
+
+        person = obj.attached_person
+        display_name = person.fullname or person.profile.get_full_name() or person.profile.username
+        district_employees[district_key][person.profile_id] = display_name
 
     all_user_ids = set()
-    for uids in district_users.values():
-        all_user_ids |= uids
+    for employees in district_employees.values():
+        all_user_ids |= set(employees.keys())
 
     login_counts = (
         LoginAttempt.objects.filter(
@@ -148,15 +157,23 @@ def _build_login_activity_by_district(days=30):
 
     date_list = [start_date + datetime.timedelta(days=i) for i in range(days)]
 
-    district_daily = OrderedDict()
+    district_data = OrderedDict()
     for district_key, name in sorted(district_names.items(), key=lambda item: item[1]):
-        daily_counts = [
-            sum(login_map.get((uid, d), 0) for uid in district_users[district_key])
-            for d in date_list
-        ]
-        district_daily[district_key] = {'name': name, 'daily': daily_counts}
+        employees = []
+        daily_total = [0] * days
 
-    return date_list, district_daily
+        for user_id, display_name in sorted(district_employees[district_key].items(), key=lambda item: item[1]):
+            daily_counts = [login_map.get((user_id, d), 0) for d in date_list]
+            employees.append({'name': display_name, 'daily': daily_counts})
+            daily_total = [a + b for a, b in zip(daily_total, daily_counts)]
+
+        district_data[district_key] = {
+            'name': name,
+            'employees': employees,
+            'daily_total': daily_total,
+        }
+
+    return date_list, district_data
 
 
 def generate_construction_summary_excel():
@@ -177,7 +194,7 @@ def generate_construction_summary_excel():
     ws1.title = "Obyektlar svodi"
 
     headers1 = [
-        "Tuman", "Mahalla", "Jami obyektlar soni",
+        "Tuman", "Jami obyektlar soni",
         "Moliyalashtirish past (<15%)", "7 kundan ortiq ma'lumot kiritilmagan",
         "Umuman ma'lumot kiritilmagan",
     ]
@@ -195,54 +212,38 @@ def generate_construction_summary_excel():
     grand_total = grand_low = grand_stale = grand_no_data = 0
 
     for district_key, district in districts.items():
-        d_total = d_low = d_stale = d_no_data = 0
-
-        for neighborhood_key, neighborhood in district['neighborhoods'].items():
-            ws1.append([
-                district['name'], neighborhood['name'], neighborhood['total'],
-                neighborhood['low_financing'], neighborhood['stale'], neighborhood['no_data'],
-            ])
-            for col in range(1, len(headers1) + 1):
-                ws1.cell(row=row_idx, column=col).border = border
-            if neighborhood['low_financing'] or neighborhood['stale'] or neighborhood['no_data']:
-                for col in (4, 5, 6):
-                    ws1.cell(row=row_idx, column=col).fill = warn_fill
-
-            d_total += neighborhood['total']
-            d_low += neighborhood['low_financing']
-            d_stale += neighborhood['stale']
-            d_no_data += neighborhood['no_data']
-            row_idx += 1
-
-        ws1.append([f"{district['name']} — jami", "", d_total, d_low, d_stale, d_no_data])
+        ws1.append([
+            district['name'], district['total_buildings'],
+            district['low_financing'], district['stale'], district['no_data'],
+        ])
         for col in range(1, len(headers1) + 1):
-            cell = ws1.cell(row=row_idx, column=col)
-            cell.font = subtotal_font
-            cell.fill = subtotal_fill
-            cell.border = border
+            ws1.cell(row=row_idx, column=col).border = border
+        if district['low_financing'] or district['stale'] or district['no_data']:
+            for col in (3, 4, 5):
+                ws1.cell(row=row_idx, column=col).fill = warn_fill
         row_idx += 1
 
-        grand_total += d_total
-        grand_low += d_low
-        grand_stale += d_stale
-        grand_no_data += d_no_data
+        grand_total += district['total_buildings']
+        grand_low += district['low_financing']
+        grand_stale += district['stale']
+        grand_no_data += district['no_data']
 
-    ws1.append(["JAMI", "", grand_total, grand_low, grand_stale, grand_no_data])
+    ws1.append(["JAMI", grand_total, grand_low, grand_stale, grand_no_data])
     for col in range(1, len(headers1) + 1):
         cell = ws1.cell(row=row_idx, column=col)
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = header_fill
         cell.border = border
 
-    for i, width in enumerate([26, 24, 16, 22, 26, 22], start=1):
+    for i, width in enumerate([28, 18, 22, 26, 22], start=1):
         ws1.column_dimensions[get_column_letter(i)].width = width
     ws1.freeze_panes = "A2"
 
     # ---------------- Sheet 2: Kirishlar statistikasi ----------------
     ws2 = wb.create_sheet("Kirishlar statistikasi")
-    date_list, district_daily = _build_login_activity_by_district(days=30)
+    date_list, district_data = _build_login_activity_by_district(days=30)
 
-    headers2 = ["Tuman"] + [d.strftime("%d.%m") for d in date_list] + ["Jami"]
+    headers2 = ["Tuman", "Hodim"] + [d.strftime("%d.%m") for d in date_list] + ["Jami"]
     ws2.append(headers2)
     for col in range(1, len(headers2) + 1):
         cell = ws2.cell(row=1, column=col)
@@ -252,17 +253,30 @@ def generate_construction_summary_excel():
         cell.border = border
 
     row_idx = 2
-    for district_key, district in district_daily.items():
-        row = [district['name']] + district['daily'] + [sum(district['daily'])]
-        ws2.append(row)
-        for col in range(1, len(row) + 1):
-            ws2.cell(row=row_idx, column=col).border = border
+    for district_key, district in district_data.items():
+        # tuman bo'yicha jami qator
+        total_row = [district['name'], "Tuman bo'yicha jami"] + district['daily_total'] + [sum(district['daily_total'])]
+        ws2.append(total_row)
+        for col in range(1, len(total_row) + 1):
+            cell = ws2.cell(row=row_idx, column=col)
+            cell.font = subtotal_font
+            cell.fill = subtotal_fill
+            cell.border = border
         row_idx += 1
 
-    ws2.column_dimensions['A'].width = 26
-    for i in range(2, len(headers2) + 1):
+        # har bir hodim bo'yicha qator
+        for employee in district['employees']:
+            row = ["", employee['name']] + employee['daily'] + [sum(employee['daily'])]
+            ws2.append(row)
+            for col in range(1, len(row) + 1):
+                ws2.cell(row=row_idx, column=col).border = border
+            row_idx += 1
+
+    ws2.column_dimensions['A'].width = 24
+    ws2.column_dimensions['B'].width = 28
+    for i in range(3, len(headers2) + 1):
         ws2.column_dimensions[get_column_letter(i)].width = 9
-    ws2.freeze_panes = "B2"
+    ws2.freeze_panes = "C2"
 
     buffer = io.BytesIO()
     wb.save(buffer)
