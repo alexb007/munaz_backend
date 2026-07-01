@@ -134,6 +134,11 @@ def _build_login_activity_by_district(days=30):
         district_key = district.id if district else 0
         district_names[district_key] = district.name if district else "Tuman biriktirilmagan"
 
+        if district:
+            for p in district.personal.all():
+                display_name = p.fullname or p.profile.get_full_name() or p.profile.username
+                district_employees[district_key][p.profile_id] = display_name
+
         person = obj.attached_person
         display_name = person.fullname or person.profile.get_full_name() or person.profile.username
         district_employees[district_key][person.profile_id] = display_name
