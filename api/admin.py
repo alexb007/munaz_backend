@@ -85,7 +85,7 @@ def _build_objects_summary_by_district():
         if budget > 0:
             ratio = (total_financed / budget) * 100
             if ratio < 15:
-                bucket['low_financing'] += 1
+                bucket['low_financing'] += obj.building_count
 
         last_date = last_progress_dates.get(obj.id)
         if last_date is None:
