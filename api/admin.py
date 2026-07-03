@@ -286,7 +286,7 @@ def generate_construction_summary_excel():
 
     # ---------------- 3+: har bir tuman uchun loyihalar kesimi ----------------
     date_style_headers = [
-        "Loyiha nomi", "Deadline",
+        "Loyiha nomi", "Topshirish sanasi",
         "So'nggi moliyalashtirish sanasi", "So'nggi kunlik tarix sanasi",
         "Moliyalashtirishlar soni", "Kunlik tarix yozuvlari soni",
         "Yuklangan hujjatlar soni", "Yuklanmagan majburiy hujjatlar soni",
