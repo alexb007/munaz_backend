@@ -341,7 +341,7 @@ def generate_construction_summary_excel():
             ws3.cell(row=row_idx, column=col).border = border
         row_idx += 1
 
-    total_row = ["UMUMIY JAMI", ""] + all_users_total + [sum(all_users_total)]
+    total_row = ["UMUMIY JAMI", "", ""] + all_users_total + [sum(all_users_total)]
     ws3.append(total_row)
     for col in range(1, len(total_row) + 1):
         cell = ws3.cell(row=row_idx, column=col)
