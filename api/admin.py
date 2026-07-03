@@ -182,6 +182,42 @@ def _build_login_activity_by_district(days=30):
     return date_list, district_data
 
 
+def _build_all_users_login_activity(days=30):
+    """
+    Tizimdagi barcha foydalanuvchilarning so'nggi `days` kunlik LoginAttempt
+    faoliyatini kunlik kesimda hisoblaydi (District/obyektga biriktirilganidan
+    qat'i nazar, barcha User lar).
+    """
+    today = timezone.now().date()
+    start_date = today - datetime.timedelta(days=days - 1)
+
+    users = User.objects.all().order_by('first_name', 'last_name', 'username')
+
+    login_counts = (
+        LoginAttempt.objects.filter(
+            timestamp__date__gte=start_date,
+            timestamp__date__lte=today,
+        )
+        .values('user_id', 'timestamp__date')
+        .annotate(count=Count('id'))
+    )
+    login_map = defaultdict(int)
+    for row in login_counts:
+        login_map[(row['user_id'], row['timestamp__date'])] += row['count']
+
+    date_list = [start_date + datetime.timedelta(days=i) for i in range(days)]
+
+    rows = []
+    daily_total = [0] * days
+    for user in users:
+        display_name = user.get_full_name() or user.username
+        daily_counts = [login_map.get((user.id, d), 0) for d in date_list]
+        rows.append({'name': display_name, 'username': user.username, 'daily': daily_counts})
+        daily_total = [a + b for a, b in zip(daily_total, daily_counts)]
+
+    return date_list, rows, daily_total
+
+
 def generate_construction_summary_excel():
     """Ikki varaqli Excel svod hisobotni yaratadi va HttpResponse qaytaradi."""
     wb = Workbook()
@@ -284,7 +320,42 @@ def generate_construction_summary_excel():
         ws2.column_dimensions[get_column_letter(i)].width = 9
     ws2.freeze_panes = "C2"
 
-    # ---------------- 3+: har bir tuman uchun loyihalar kesimi ----------------
+    # ---------------- Sheet 3: Barcha foydalanuvchilar kirishlari ----------------
+    ws3 = wb.create_sheet("Barcha foydalanuvchilar")
+    all_users_dates, all_users_rows, all_users_total = _build_all_users_login_activity(days=30)
+
+    headers3 = ["F.I.Sh", "Login"] + [d.strftime("%d.%m") for d in all_users_dates] + ["Jami"]
+    ws3.append(headers3)
+    for col in range(1, len(headers3) + 1):
+        cell = ws3.cell(row=1, column=col)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = border
+
+    row_idx = 2
+    for user_row in all_users_rows:
+        row = [user_row['name'], user_row['username']] + user_row['daily'] + [sum(user_row['daily'])]
+        ws3.append(row)
+        for col in range(1, len(row) + 1):
+            ws3.cell(row=row_idx, column=col).border = border
+        row_idx += 1
+
+    total_row = ["UMUMIY JAMI", ""] + all_users_total + [sum(all_users_total)]
+    ws3.append(total_row)
+    for col in range(1, len(total_row) + 1):
+        cell = ws3.cell(row=row_idx, column=col)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = header_fill
+        cell.border = border
+
+    ws3.column_dimensions['A'].width = 28
+    ws3.column_dimensions['B'].width = 20
+    for i in range(3, len(headers3) + 1):
+        ws3.column_dimensions[get_column_letter(i)].width = 9
+    ws3.freeze_panes = "C2"
+
+    # ---------------- 4+: har bir tuman uchun loyihalar kesimi ----------------
     date_style_headers = [
         "Loyiha nomi", "Topshirish sanasi",
         "So'nggi moliyalashtirish sanasi", "So'nggi kunlik tarix sanasi",
@@ -292,7 +363,7 @@ def generate_construction_summary_excel():
         "Yuklangan hujjatlar soni", "Yuklanmagan majburiy hujjatlar soni",
     ]
     district_details = _build_district_project_details()
-    used_sheet_names = {ws1.title, ws2.title}
+    used_sheet_names = {ws1.title, ws2.title, ws3.title}
 
     for district_key, district in district_details.items():
         sheet_name = _sanitize_sheet_name(district['name'], used_sheet_names)
