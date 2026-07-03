@@ -212,7 +212,7 @@ def _build_all_users_login_activity(days=30):
     for user in users:
         display_name = user.get_full_name() or user.username
         daily_counts = [login_map.get((user.id, d), 0) for d in date_list]
-        rows.append({'name': display_name, 'username': user.username, 'daily': daily_counts})
+        rows.append({'name': display_name, 'username': user.username, 'role': user.role, 'daily': daily_counts})
         daily_total = [a + b for a, b in zip(daily_total, daily_counts)]
 
     return date_list, rows, daily_total
@@ -324,7 +324,7 @@ def generate_construction_summary_excel():
     ws3 = wb.create_sheet("Barcha foydalanuvchilar")
     all_users_dates, all_users_rows, all_users_total = _build_all_users_login_activity(days=30)
 
-    headers3 = ["F.I.Sh", "Login"] + [d.strftime("%d.%m") for d in all_users_dates] + ["Jami"]
+    headers3 = ["F.I.Sh", "Login", "Mansabi"] + [d.strftime("%d.%m") for d in all_users_dates] + ["Jami"]
     ws3.append(headers3)
     for col in range(1, len(headers3) + 1):
         cell = ws3.cell(row=1, column=col)
@@ -335,7 +335,7 @@ def generate_construction_summary_excel():
 
     row_idx = 2
     for user_row in all_users_rows:
-        row = [user_row['name'], user_row['username']] + user_row['daily'] + [sum(user_row['daily'])]
+        row = [user_row['name'], user_row['username'], user_row['role']] + user_row['daily'] + [sum(user_row['daily'])]
         ws3.append(row)
         for col in range(1, len(row) + 1):
             ws3.cell(row=row_idx, column=col).border = border
