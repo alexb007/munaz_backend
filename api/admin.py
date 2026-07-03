@@ -284,6 +284,55 @@ def generate_construction_summary_excel():
         ws2.column_dimensions[get_column_letter(i)].width = 9
     ws2.freeze_panes = "C2"
 
+    # ---------------- 3+: har bir tuman uchun loyihalar kesimi ----------------
+    date_style_headers = [
+        "Loyiha nomi", "Deadline",
+        "So'nggi moliyalashtirish sanasi", "So'nggi kunlik tarix sanasi",
+        "Moliyalashtirishlar soni", "Kunlik tarix yozuvlari soni",
+        "Yuklangan hujjatlar soni", "Yuklanmagan majburiy hujjatlar soni",
+    ]
+    district_details = _build_district_project_details()
+    used_sheet_names = {ws1.title, ws2.title}
+
+    for district_key, district in district_details.items():
+        sheet_name = _sanitize_sheet_name(district['name'], used_sheet_names)
+        ws = wb.create_sheet(sheet_name)
+
+        ws.append(date_style_headers)
+        for col in range(1, len(date_style_headers) + 1):
+            cell = ws.cell(row=1, column=col)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center
+            cell.border = border
+
+        row_idx = 2
+        for proj in district['objects']:
+            row = [
+                proj['name'],
+                proj['deadline'].strftime("%d.%m.%Y") if proj['deadline'] else "—",
+                proj['last_financing_date'].strftime("%d.%m.%Y") if proj['last_financing_date'] else "—",
+                proj['last_progress_date'].strftime("%d.%m.%Y") if proj['last_progress_date'] else "—",
+                proj['financing_count'],
+                proj['progress_count'],
+                proj['uploaded_docs'],
+                proj['missing_mandatory_docs'],
+            ]
+            ws.append(row)
+            for col in range(1, len(row) + 1):
+                ws.cell(row=row_idx, column=col).border = border
+            if proj['financing_count'] == 0:
+                ws.cell(row=row_idx, column=5).fill = warn_fill
+            if proj['progress_count'] == 0:
+                ws.cell(row=row_idx, column=6).fill = warn_fill
+            if proj['missing_mandatory_docs']:
+                ws.cell(row=row_idx, column=8).fill = warn_fill
+            row_idx += 1
+
+        for i, width in enumerate([32, 14, 24, 22, 20, 22, 20, 26], start=1):
+            ws.column_dimensions[get_column_letter(i)].width = width
+        ws.freeze_panes = "A2"
+
     buffer = io.BytesIO()
     wb.save(buffer)
     buffer.seek(0)
@@ -295,6 +344,97 @@ def generate_construction_summary_excel():
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+def _sanitize_sheet_name(name, used_names):
+    """Excel varaq nomi uchun taqiqlangan belgilarni olib tashlaydi, 31 belgigacha
+    qisqartiradi va takrorlanishning oldini oladi."""
+    invalid_chars = ['\\', '/', '?', '*', '[', ']', ':']
+    clean = name
+    for ch in invalid_chars:
+        clean = clean.replace(ch, ' ')
+    clean = clean.strip() or "Tuman"
+    clean = clean[:31]
+
+    base = clean
+    suffix = 1
+    while clean in used_names:
+        suffix_str = f" ({suffix})"
+        clean = base[: 31 - len(suffix_str)] + suffix_str
+        suffix += 1
+
+    used_names.add(clean)
+    return clean
+
+
+def _build_district_project_details():
+    """
+    Har bir District uchun, unga tegishli loyihalar (ConstructionObject) kesimida:
+      - deadline (qurilish topshirish muddati)
+      - so'nggi moliyalashtirish sanasi
+      - so'nggi kunlik tarix sanasi
+      - moliyalashtirishlar soni
+      - kunlik tarix yozuvlari soni
+      - yuklangan hujjatlar soni
+      - yuklanmagan majburiy hujjatlar soni
+    ma'lumotlarini tayyorlaydi.
+    """
+    financing_stats = {
+        row['construction_id']: (row['count'], row['last_date'])
+        for row in ConstructionFinancing.objects.values('construction_id').annotate(
+            count=Count('id'), last_date=Max('date')
+        )
+    }
+    progress_stats = {
+        row['construction_id']: (row['count'], row['last_date'])
+        for row in ConstructionDailyProgress.objects.values('construction_id').annotate(
+            count=Count('id'), last_date=Max('date')
+        )
+    }
+    uploaded_doc_counts = {
+        row['construction_id']: row['count']
+        for row in ConstructionObjectDocument.objects.exclude(file='').values('construction_id').annotate(
+            count=Count('id')
+        )
+    }
+
+    mandatory_type_ids = set(
+        ConstructionObjectDocumentType.objects.filter(required=True).values_list('id', flat=True)
+    )
+
+    uploaded_types_by_object = defaultdict(set)
+    for row in ConstructionObjectDocument.objects.exclude(file='').values('construction_id', 'document_type_id'):
+        uploaded_types_by_object[row['construction_id']].add(row['document_type_id'])
+
+    objects = ConstructionObject.objects.select_related('neighborhood__district').order_by('name')
+
+    districts = OrderedDict()
+
+    for obj in objects:
+        neighborhood = obj.neighborhood
+        district = neighborhood.district if neighborhood else None
+        district_key = district.id if district else 0
+        district_name = district.name if district else "Tuman biriktirilmagan"
+
+        bucket = districts.setdefault(district_key, {'name': district_name, 'objects': []})
+
+        financing_count, last_financing_date = financing_stats.get(obj.id, (0, None))
+        progress_count, last_progress_date = progress_stats.get(obj.id, (0, None))
+        uploaded_docs = uploaded_doc_counts.get(obj.id, 0)
+        missing_mandatory = len(mandatory_type_ids - uploaded_types_by_object.get(obj.id, set()))
+
+        bucket['objects'].append({
+            'name': obj.name,
+            'deadline': obj.deadline,
+            'last_financing_date': last_financing_date,
+            'last_progress_date': last_progress_date,
+            'financing_count': financing_count,
+            'progress_count': progress_count,
+            'uploaded_docs': uploaded_docs,
+            'missing_mandatory_docs': missing_mandatory,
+        })
+
+    return districts
 
 
 class UserResource(resources.ModelResource):
