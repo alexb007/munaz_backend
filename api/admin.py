@@ -736,7 +736,11 @@ class ConstructionObjectAdmin(ModelAdmin):
         Tuman/Mahalla kesimida obyektlar svodi va so'nggi 30 kunlik
         kirish statistikasini o'z ichiga olgan Excel faylni yuklab beradi.
         """
-        return generate_construction_summary_excel()
+        if self.request.user.role == UserRole.ADMIN:
+            return generate_construction_summary_excel()
+        return HttpResponse(
+            "404",
+        )
 
 
 @admin.register(Issue)
