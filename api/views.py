@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, date
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, DecimalField, FloatField, Sum, Count, QuerySet, Max
 from django.db.models.functions import Coalesce, NullIf
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 
 from api.filters import ConstructionObjectFilter, UniversalDRFFilterBackend
 from api.mixins import AutoRelatedMixin, ReadWriteSerializerMixin
@@ -791,8 +793,11 @@ class LiveCameraURLView(APIView):
 
 class CameraViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Camera.objects.all()
+    queryset = Camera.objects.filter(is_active=True)
     serializer_class = CameraSerializer
+    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filterset_fields = ('object',)
+    search_fields = ('name', 'deviceSerial', 'channelNo', 'protocol')
 
 class CameraCaptureListView(generics.ListAPIView):
     serializer_class = CameraCaptureSerializer
