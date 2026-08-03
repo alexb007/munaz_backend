@@ -15,14 +15,14 @@ def get_access_token() -> str:
 
     resp = requests.post(
         f"{settings.HIKCONNECT_API_BASE}/api/hccgw/platform/v1/token/get",
-        data={
+        json={
             "appKey": settings.HIKCONNECT_APP_KEY,
             "secretKey": settings.HIKCONNECT_APP_SECRET,
         },
         timeout=10,
     )
     data = resp.json()
-    if data.get("code") != "200":
+    if data.status_code != 200:
         raise HikConnectError(data.get("msg", "token fetch failed"))
 
     token = data["data"]["accessToken"]
