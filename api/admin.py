@@ -836,3 +836,12 @@ class AssignmentAdmin(ModelAdmin):
     list_display = ('id', 'title', 'description', 'created_by', 'assigned_to', 'deadline', 'status')
     list_display_links = ('id', 'title', 'description', 'created_by', 'assigned_to', 'deadline', 'status')
     inlines = [AssignmentAttachmentInline]
+
+@admin.register(Camera)
+class CameraAdmin(ModelAdmin):
+    list_filter = ('object',)
+
+@admin.register(CameraCapture)
+class CameraCaptureAdmin(ModelAdmin):
+    list_filter = ('camera',)
+    filter_horizontal = ('captured_at',)
