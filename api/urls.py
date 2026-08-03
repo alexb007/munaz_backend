@@ -36,7 +36,7 @@ router.register('financing', ConstructionFinancingViewSet, 'financing')
 router.register('progress', ConstructionProgressViewSet, 'progress')
 router.register('assignments', AssignmentViewSet, basename='assignments')
 router.register(r'calendar', CalendarViewSet, basename='calendar')
-router.register(r'cameras', CameraViewSet, basename='calendar')
+router.register(r'cameras', CameraViewSet, basename='cameras')
 
 urlpatterns = router.urls
 
