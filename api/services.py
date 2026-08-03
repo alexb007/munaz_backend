@@ -21,10 +21,10 @@ def get_access_token() -> str:
         },
         timeout=10,
     )
-    data = resp.json()
-    if data.status_code != 200:
+    if resp.status_code != 200:
         raise HikConnectError(data.get("msg", "token fetch failed"))
 
+    data = resp.json()
     token = data["data"]["accessToken"]
     expire_ms = data["data"].get("expireTime", 0)  # epoch ms, if returned
     # fall back to ~6 days if API doesn't return expireTime
