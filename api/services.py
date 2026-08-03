@@ -14,10 +14,10 @@ def get_access_token() -> str:
         return token
 
     resp = requests.post(
-        f"{settings.HIKCONNECT_API_BASE}/api/lapp/token/get",
+        f"{settings.HIKCONNECT_API_BASE}/api/hccgw/platform/v1/token/get",
         data={
             "appKey": settings.HIKCONNECT_APP_KEY,
-            "appSecret": settings.HIKCONNECT_APP_SECRET,
+            "secretKey": settings.HIKCONNECT_APP_SECRET,
         },
         timeout=10,
     )
