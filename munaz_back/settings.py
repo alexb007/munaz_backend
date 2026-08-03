@@ -14,6 +14,8 @@ import os.path
 from pathlib import Path
 from datetime import timedelta
 from django.conf import settings
+from celery.schedules import crontab
+
 
 
 env = environ.Env(
@@ -59,6 +61,7 @@ INSTALLED_APPS = [
     'webpush',
     'silk',
     'import_export',
+    'django_celery_beat',
 ]
 
 CSRF_COOKIE_SECURE=False
@@ -282,3 +285,26 @@ UNFOLD = {
         },
     },
 }
+
+HIKCONNECT_APP_KEY = env("HIKCONNECT_APP_KEY")
+HIKCONNECT_APP_SECRET = env("HIKCONNECT_APP_SECRET")
+HIKCONNECT_API_BASE = env("HIKCONNECT_API_BASE")
+
+
+CELERY_BEAT_SCHEDULE = {
+    # ...refresh-hikconnect-token from before...
+    "camera-capture-morning": {
+        "task": "cameras.tasks.capture_all_camera_snapshots",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    "camera-capture-afternoon": {
+        "task": "cameras.tasks.capture_all_camera_snapshots",
+        "schedule": crontab(hour=14, minute=0),
+    },
+    "camera-capture-evening": {
+        "task": "cameras.tasks.capture_all_camera_snapshots",
+        "schedule": crontab(hour=20, minute=0),
+    },
+}
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

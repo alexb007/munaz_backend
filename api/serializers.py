@@ -9,7 +9,7 @@ from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssu
     ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
-    GovermentProgram, Assignment, AssignmentAttachment, Region, District
+    GovermentProgram, Assignment, AssignmentAttachment, Region, District, CameraCapture
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -412,3 +412,9 @@ class IssueSerializer(serializers.ModelSerializer):
         model = Issue
         fields = '__all__'
         read_only_fields = ['created_by', 'created_at', 'updated_at']
+
+
+class CameraCaptureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CameraCapture
+        fields = ["id", "image", "captured_at"]

@@ -12,7 +12,8 @@ from .views import (
     ConstructionsView, IssueTypeView, InspectionsView, IssuesView, InspectionTypesView, ProjectCompanyView,
     ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView,
     ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet, NeighborhoodViewSet,
-    GovernmentProgramViewSet, PublicIssueViewSet, CalendarViewSet, report_issue, AssignmentViewSet, DistrictViewSet
+    GovernmentProgramViewSet, PublicIssueViewSet, CalendarViewSet, report_issue, AssignmentViewSet, DistrictViewSet,
+    LiveCameraURLView
 )
 
 router = DefaultRouter()
@@ -53,5 +54,6 @@ urlpatterns += [
     path('issues/<int:issue_id>/photos/', IssuePhotoCreateView.as_view(), name='issue-photo-create'),
     path('issues/<int:pk>/', IssueUpdateView.as_view(), name='issue-update'),
     path('report-issue/', report_issue, name='report-issue'),
+    path("camera-url/", LiveCameraURLView.as_view(), name="hikconnect-live-url"),
 ]
 

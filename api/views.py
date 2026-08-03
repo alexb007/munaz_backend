@@ -72,6 +72,7 @@ from .serializers import (
     GovernmentProgramSerializer, AssignmentSerializer, CreateAssignmentSerializer, CreateIssueSerializer,
     DistrictSerializer,
 )
+from .services import get_live_address, HikConnectError
 from .utils import unblock_user, get_user_login_stats, haversine_distance
 
 
@@ -767,3 +768,37 @@ def report_issue(request):
         'message': 'Issue reported successfully',
         'distance': round(distance, 1),
     }, status=201)
+
+class LiveCameraURLView(APIView):
+    permission_classes = [IsAuthenticated]  # restrict to your app's authed users
+
+    def get(self, request):
+        device_serial = request.query_params.get("deviceSerial")
+        channel_no = request.query_params.get("channelNo", "1")
+        protocol = request.query_params.get("protocol", "2")
+
+        if not device_serial:
+            return Response({"error": "deviceSerial is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data = get_live_address(device_serial, channel_no, protocol)
+        except HikConnectError as e:
+            return Response({"error": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(data)
+
+
+class CameraCaptureListView(generics.ListAPIView):
+    serializer_class = CameraCaptureSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        camera = get_object_or_404(Camera, id=self.kwargs["camera_id"])
+        if camera.owner_id != self.request.user.id and not self.request.user.is_staff:
+            raise PermissionDenied()
+
+        qs = camera.captures.all()
+        date_str = self.request.query_params.get("date")
+        if date_str:
+            qs = qs.filter(captured_at__date=date_str)
+        return qs

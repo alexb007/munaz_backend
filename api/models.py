@@ -603,3 +603,29 @@ class AssignmentAttachment(models.Model):
         verbose_name = _('Murojaat fayli')
         verbose_name_plural = _('Murojaat fayllari')
         ordering = ('assignment', )
+
+
+class Camera(models.Model):
+    name = models.CharField(max_length=100)
+    device_serial = models.CharField(max_length=64, unique=True)
+    channel_no = models.CharField(max_length=8, default="1")
+    object = models.ForeignKey(
+        ConstructionObject, on_delete=models.CASCADE, related_name="cameras"
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.device_serial})"
+
+class CameraCapture(models.Model):
+    camera = models.ForeignKey(Camera, on_delete=models.CASCADE, related_name="captures")
+    image = models.ImageField(upload_to="camera_captures/%Y/%m/%d/")
+    captured_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-captured_at"]
+        indexes = [models.Index(fields=["camera", "-captured_at"])]
+
+    def __str__(self):
+        return f"{self.camera.device_serial} @ {self.captured_at:%Y-%m-%d %H:%M}"
