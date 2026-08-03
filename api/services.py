@@ -22,7 +22,7 @@ def get_access_token() -> str:
         timeout=10,
     )
     if resp.status_code != 200:
-        raise HikConnectError(data.get("msg", "token fetch failed"))
+        raise HikConnectError("token fetch failed")
 
     data = resp.json()
     token = data["data"]["accessToken"]
@@ -54,8 +54,8 @@ def get_live_address(device_serial: str, channel_no: str = "1", protocol: str = 
         token = get_access_token()
         resp = requests.post(
             f"{settings.HIKCONNECT_API_BASE}/api/lapp/v2/live/address/get",
-            data={
-                "accessToken": token,
+            headers={"Token": token},
+            json={
                 "deviceSerial": device_serial,
                 "channelNo": channel_no,
                 "protocol": protocol,
@@ -78,7 +78,7 @@ def capture_snapshot(device_serial: str, channel_no: str = "1") -> str:
     resp = requests.post(
         CAPTURE_URL,
         json={"deviceSerial": device_serial, "channelNo": int(channel_no)},
-        headers={"Authorization": token},  # confirm exact header/param name in your Team OpenAPI docs
+        headers={"Token": token},  # confirm exact header/param name in your Team OpenAPI docs
         timeout=15,
     )
     data = resp.json()
