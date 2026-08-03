@@ -71,6 +71,7 @@ from .serializers import (
     NeighborhoodSerializer,
     GovernmentProgramSerializer, AssignmentSerializer, CreateAssignmentSerializer, CreateIssueSerializer,
     DistrictSerializer,
+    CameraCaptureSerializer,
 )
 from .services import get_live_address, HikConnectError
 from .utils import unblock_user, get_user_login_stats, haversine_distance
