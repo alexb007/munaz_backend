@@ -9,7 +9,7 @@ from .models import ConstructionDailyProgress, ConstructionFinancing, PublicIssu
     ConstructionObject, Review, ReportPhoto, Report, IssuePhoto, Issue, ConstructionCompany, \
     Person, IssueType, ConstructionObjectDocument, InspectionType, ProjectOwnerCompany, ProjectDeveloperCompany, \
     ConstructionObjectDocumentType, IssueAction, ReviewComment, IssueActionPhoto, ReviewCommentPhoto, Neighborhood, \
-    GovermentProgram, Assignment, AssignmentAttachment, Region, District, CameraCapture
+    GovermentProgram, Assignment, AssignmentAttachment, Region, District, CameraCapture, Camera
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -418,3 +418,8 @@ class CameraCaptureSerializer(serializers.ModelSerializer):
     class Meta:
         model = CameraCapture
         fields = ["id", "image", "captured_at"]
+
+class CameraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Camera
+        fields = "__all__"

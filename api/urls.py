@@ -13,7 +13,7 @@ from .views import (
     ProjectOwnerCompanyView, ConstructionCompanyView, PersonView, ConstructionObjectDocumentsView,
     ConstructionDocumentTypeView, IssueActionViewSet, ReviewCommentViewSet, NeighborhoodViewSet,
     GovernmentProgramViewSet, PublicIssueViewSet, CalendarViewSet, report_issue, AssignmentViewSet, DistrictViewSet,
-    LiveCameraURLView, CameraCaptureListView
+    LiveCameraURLView, CameraCaptureListView, CameraViewSet
 )
 
 router = DefaultRouter()
@@ -36,6 +36,7 @@ router.register('financing', ConstructionFinancingViewSet, 'financing')
 router.register('progress', ConstructionProgressViewSet, 'progress')
 router.register('assignments', AssignmentViewSet, basename='assignments')
 router.register(r'calendar', CalendarViewSet, basename='calendar')
+router.register(r'cameras', CameraViewSet, basename='calendar')
 
 urlpatterns = router.urls
 

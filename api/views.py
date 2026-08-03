@@ -38,7 +38,7 @@ from .models import (
     IssueAction,
     ReviewComment,
     Neighborhood,
-    GovermentProgram, IssueLevel, Assignment, UserRole, User, District,
+    GovermentProgram, IssueLevel, Assignment, UserRole, User, District, Camera,
 )
 from .permissions import IsInspectorOrDeveloper
 from .serializers import (
@@ -71,7 +71,7 @@ from .serializers import (
     NeighborhoodSerializer,
     GovernmentProgramSerializer, AssignmentSerializer, CreateAssignmentSerializer, CreateIssueSerializer,
     DistrictSerializer,
-    CameraCaptureSerializer,
+    CameraCaptureSerializer, CameraSerializer,
 )
 from .services import get_live_address, HikConnectError
 from .utils import unblock_user, get_user_login_stats, haversine_distance
@@ -788,6 +788,11 @@ class LiveCameraURLView(APIView):
 
         return Response(data)
 
+
+class CameraViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Camera.objects.all()
+    serializer_class = CameraSerializer
 
 class CameraCaptureListView(generics.ListAPIView):
     serializer_class = CameraCaptureSerializer
